@@ -117,7 +117,7 @@ impl Embedder {
                 dir.display()
             )));
         }
-        let weights = ModelWeights::load(&weights_path, &config)?;
+        let weights = ModelWeights::load_mmap(&weights_path, &config)?;
 
         Ok(Self {
             tokenizer,
@@ -153,7 +153,7 @@ impl Embedder {
             &token_type_ids,
             &self.weights.word_embeddings,
             &self.weights.position_embeddings,
-            &self.weights.token_type_embeddings,
+            self.weights.token_type_embeddings.as_ref(),
             &self.weights.embedding_ln_weight,
             &self.weights.embedding_ln_bias,
             self.config.ln_eps(),

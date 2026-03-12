@@ -22,7 +22,7 @@ const MAX_WORD_LEN: usize = 200;
 ///
 /// Returns a vector of subword token strings (e.g., ["un", "##aff", "##able"]).
 /// If the word cannot be tokenized, returns ["[UNK]"].
-pub fn wordpiece_tokenize<'a>(word: &str, vocab: &'a Vocab) -> Vec<String> {
+pub fn wordpiece_tokenize(word: &str, vocab: &Vocab) -> Vec<String> {
     if word.is_empty() {
         return vec![];
     }

@@ -1,3 +1,6 @@
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::empty_line_after_doc_comments)]
+#![allow(clippy::needless_range_loop)]
 //! # HypEmbed
 //!
 //! A pure-Rust, local-first embedding inference library.

@@ -4,6 +4,7 @@
 
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::{Tensor, Shape};
+use crate::tensor::simd;
 
 /// 2D matrix multiplication: C = A @ B
 ///
@@ -36,16 +37,18 @@ pub fn matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     let b_data = b.data();
     let mut c_data = vec![0.0f32; m * n];
 
-    // ikj loop order for cache-friendly access
+    // ikj loop order for cache-friendly access, SIMD-accelerated inner loop
     for i in 0..m {
         let a_row = i * k_a;
         let c_row = i * n;
         for k in 0..k_a {
             let a_ik = a_data[a_row + k];
             let b_row = k * n;
-            for j in 0..n {
-                c_data[c_row + j] += a_ik * b_data[b_row + j];
-            }
+            simd::add_assign_scaled(
+                &mut c_data[c_row..c_row + n],
+                &b_data[b_row..b_row + n],
+                a_ik,
+            );
         }
     }
 
@@ -103,9 +106,11 @@ pub fn batched_matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
             for k in 0..k_a {
                 let a_ik = a_data[a_row + k];
                 let b_row = b_base + k * n;
-                for j in 0..n {
-                    c_data[c_row + j] += a_ik * b_data[b_row + j];
-                }
+                simd::add_assign_scaled(
+                    &mut c_data[c_row..c_row + n],
+                    &b_data[b_row..b_row + n],
+                    a_ik,
+                );
             }
         }
     }

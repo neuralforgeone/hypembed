@@ -88,6 +88,7 @@ mod tests {
             layer_norm_eps: 1e-12,
             hidden_act: "gelu".into(),
             type_vocab_size: 2,
+            model_type: None,
         }
     }
 

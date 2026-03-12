@@ -1,11 +1,11 @@
-///! Basic example: load a model and generate embeddings.
-///!
-///! To run this example, download a BERT-like model (e.g., all-MiniLM-L6-v2)
-///! and place config.json, vocab.txt, and model.safetensors in a directory.
-///!
-///! ```bash
-///! cargo run --example basic_embed -- ./path/to/model
-///! ```
+//! Basic example: load a model and generate embeddings.
+//!
+//! To run this example, download a BERT-like model (e.g., all-MiniLM-L6-v2)
+//! and place config.json, vocab.txt, and model.safetensors in a directory.
+//!
+//! ```bash
+//! cargo run --example basic_embed -- ./path/to/model
+//! ```
 
 use hypembed::{Embedder, EmbeddingOptions, PoolingStrategy};
 use std::env;

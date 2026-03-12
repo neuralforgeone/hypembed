@@ -4,6 +4,7 @@
 
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::{Tensor, Shape};
+use crate::tensor::simd;
 
 /// Element-wise addition of two tensors with the same shape.
 pub fn add(a: &Tensor, b: &Tensor) -> Result<Tensor> {
@@ -13,7 +14,8 @@ pub fn add(a: &Tensor, b: &Tensor) -> Result<Tensor> {
             a.shape(), b.shape()
         )));
     }
-    let data: Vec<f32> = a.data().iter().zip(b.data()).map(|(&x, &y)| x + y).collect();
+    let mut data = vec![0.0f32; a.numel()];
+    simd::elementwise_add(a.data(), b.data(), &mut data);
     Tensor::from_vec(data, a.shape().clone())
 }
 
@@ -57,13 +59,15 @@ pub fn mul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
             a.shape(), b.shape()
         )));
     }
-    let data: Vec<f32> = a.data().iter().zip(b.data()).map(|(&x, &y)| x * y).collect();
+    let mut data = vec![0.0f32; a.numel()];
+    simd::elementwise_mul(a.data(), b.data(), &mut data);
     Tensor::from_vec(data, a.shape().clone())
 }
 
 /// Multiply every element by a scalar.
 pub fn scalar_mul(tensor: &Tensor, scalar: f32) -> Tensor {
-    let data: Vec<f32> = tensor.data().iter().map(|&x| x * scalar).collect();
+    let mut data = vec![0.0f32; tensor.numel()];
+    simd::scalar_mul_slice(tensor.data(), scalar, &mut data);
     // Safe: same shape, same length
     Tensor::from_vec(data, tensor.shape().clone()).unwrap()
 }
@@ -249,7 +253,7 @@ mod tests {
         ).unwrap();
         let bias = Tensor::from_vec(vec![0.1, 0.2, 0.3], Shape::new(vec![3])).unwrap();
         let result = add_bias(&t, &bias).unwrap();
-        let expected = vec![1.1, 2.2, 3.3, 4.1, 5.2, 6.3];
+        let expected = [1.1, 2.2, 3.3, 4.1, 5.2, 6.3];
         for (a, b) in result.data().iter().zip(expected.iter()) {
             assert!((a - b).abs() < 1e-6);
         }

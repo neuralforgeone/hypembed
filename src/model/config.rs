@@ -39,6 +39,11 @@ pub struct ModelConfig {
     /// Number of token type (segment) embeddings.
     #[serde(default = "default_type_vocab_size")]
     pub type_vocab_size: usize,
+
+    /// Model type (e.g., "bert", "distilbert", "xlm-roberta").
+    /// Auto-detected from config.json.
+    #[serde(default)]
+    pub model_type: Option<String>,
 }
 
 fn default_layer_norm_eps() -> f64 {
@@ -87,6 +92,16 @@ impl ModelConfig {
     /// Layer norm eps as f32.
     pub fn ln_eps(&self) -> f32 {
         self.layer_norm_eps as f32
+    }
+
+    /// Check if this is a DistilBERT model.
+    pub fn is_distilbert(&self) -> bool {
+        self.model_type.as_deref() == Some("distilbert")
+    }
+
+    /// Check if this is a standard BERT-type model (BERT, MiniLM, etc.).
+    pub fn is_bert(&self) -> bool {
+        !self.is_distilbert()
     }
 }
 

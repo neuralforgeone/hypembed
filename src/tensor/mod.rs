@@ -10,6 +10,7 @@ pub mod softmax;
 pub mod activation;
 pub mod layernorm;
 pub mod normalize;
+pub mod simd;
 
 use crate::error::{HypEmbedError, Result};
 pub use shape::Shape;

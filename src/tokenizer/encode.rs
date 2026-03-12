@@ -8,6 +8,7 @@ use crate::error::{HypEmbedError, Result};
 use crate::tokenizer::vocab::Vocab;
 use crate::tokenizer::wordpiece;
 use crate::tokenizer::pre_tokenize;
+use rayon::prelude::*;
 
 /// The output of tokenizing a single text.
 #[derive(Debug, Clone)]
@@ -113,12 +114,12 @@ impl Tokenizer {
         })
     }
 
-    /// Encode a batch of texts.
+    /// Encode a batch of texts in parallel.
     ///
-    /// All encodings are padded to the same `max_length`.
+    /// Uses rayon for parallel tokenization. All encodings are padded to `max_length`.
     pub fn encode_batch(&self, texts: &[&str], max_length: usize) -> Result<Vec<Encoding>> {
         texts
-            .iter()
+            .par_iter()
             .map(|text| self.encode(text, max_length))
             .collect()
     }

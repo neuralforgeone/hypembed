@@ -16,7 +16,7 @@ use crate::tensor::layernorm;
 /// - `token_type_ids`: [batch_size, seq_len] segment IDs (0 or 1)
 /// - `word_embeddings`: [vocab_size, hidden_size]
 /// - `position_embeddings`: [max_positions, hidden_size]
-/// - `token_type_embeddings`: [type_vocab_size, hidden_size]
+/// - `token_type_embeddings`: [type_vocab_size, hidden_size] or None for models without (e.g., DistilBERT)
 /// - `ln_weight`, `ln_bias`: LayerNorm parameters [hidden_size]
 /// - `eps`: LayerNorm epsilon
 ///
@@ -27,7 +27,7 @@ pub fn compute_embeddings(
     token_type_ids: &[Vec<u32>],
     word_embeddings: &Tensor,
     position_embeddings: &Tensor,
-    token_type_embeddings: &Tensor,
+    token_type_embeddings: Option<&Tensor>,
     ln_weight: &Tensor,
     ln_bias: &Tensor,
     eps: f32,
@@ -39,24 +39,30 @@ pub fn compute_embeddings(
     let mut output = vec![0.0f32; batch_size * seq_len * hidden_size];
     let word_data = word_embeddings.data();
     let pos_data = position_embeddings.data();
-    let tt_data = token_type_embeddings.data();
+    let tt_data = token_type_embeddings.map(|t| t.data());
 
     for b in 0..batch_size {
         for s in 0..seq_len {
             let token_id = input_ids[b][s] as usize;
-            let type_id = token_type_ids[b][s] as usize;
             let out_offset = (b * seq_len + s) * hidden_size;
 
-            // word_embed[token_id] + position_embed[s] + token_type_embed[type_id]
+            // word_embed[token_id] + position_embed[s]
             let word_offset = token_id * hidden_size;
             let pos_offset = s * hidden_size;
-            let tt_offset = type_id * hidden_size;
 
             for h in 0..hidden_size {
                 output[out_offset + h] =
                     word_data[word_offset + h]
-                    + pos_data[pos_offset + h]
-                    + tt_data[tt_offset + h];
+                    + pos_data[pos_offset + h];
+            }
+
+            // + token_type_embed[type_id] (if available)
+            if let Some(tt) = tt_data {
+                let type_id = token_type_ids[b][s] as usize;
+                let tt_offset = type_id * hidden_size;
+                for h in 0..hidden_size {
+                    output[out_offset + h] += tt[tt_offset + h];
+                }
             }
         }
     }
@@ -89,7 +95,7 @@ mod tests {
 
         let result = compute_embeddings(
             &input_ids, &token_type_ids,
-            &word_emb, &pos_emb, &tt_emb,
+            &word_emb, &pos_emb, Some(&tt_emb),
             &ln_w, &ln_b, 1e-12,
         ).unwrap();
 

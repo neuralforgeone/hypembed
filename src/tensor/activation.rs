@@ -13,7 +13,7 @@
 use crate::tensor::Tensor;
 
 /// Constant: sqrt(2 / π) ≈ 0.7978845608
-const SQRT_2_OVER_PI: f32 = 0.797_884_56;
+const SQRT_2_OVER_PI: f32 = 0.797_884_6;
 
 /// Apply GELU element-wise.
 pub fn gelu(tensor: &Tensor) -> Tensor {
