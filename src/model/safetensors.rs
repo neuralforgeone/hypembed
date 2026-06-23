@@ -20,12 +20,16 @@
 /// copy into heap memory. The `DataStore` enum abstracts over owned vs mapped storage.
 
 use std::collections::HashMap;
-use std::path::Path;
-use std::fs::File;
 use serde::Deserialize;
-use memmap2::Mmap;
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::{Tensor, Shape};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::Path;
+#[cfg(not(target_arch = "wasm32"))]
+use std::fs::File;
+#[cfg(not(target_arch = "wasm32"))]
+use memmap2::Mmap;
 
 /// Metadata for a single tensor in a SafeTensors file.
 #[derive(Debug, Deserialize)]
@@ -42,6 +46,7 @@ pub struct TensorInfo {
 #[derive(Debug)]
 enum DataStore {
     Owned(Vec<u8>),
+    #[cfg(not(target_arch = "wasm32"))]
     Mapped(Mmap),
 }
 
@@ -49,6 +54,7 @@ impl AsRef<[u8]> for DataStore {
     fn as_ref(&self) -> &[u8] {
         match self {
             DataStore::Owned(v) => v,
+            #[cfg(not(target_arch = "wasm32"))]
             DataStore::Mapped(m) => m,
         }
     }
@@ -68,10 +74,8 @@ pub struct SafeTensorsFile {
 }
 
 impl SafeTensorsFile {
-    /// Load and parse a SafeTensors file (reads entire file into memory).
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let bytes = std::fs::read(path.as_ref())?;
-
+    /// Parse a SafeTensors file from in-memory bytes.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < 8 {
             return Err(HypEmbedError::Model("SafeTensors file too small".into()));
         }
@@ -100,10 +104,18 @@ impl SafeTensorsFile {
         })
     }
 
+    /// Load and parse a SafeTensors file (reads entire file into memory).
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let bytes = std::fs::read(path.as_ref())?;
+        Self::from_bytes(&bytes)
+    }
+
     /// Load and parse a SafeTensors file using memory-mapped I/O.
     ///
     /// This avoids copying the entire file into heap memory, which significantly
     /// reduces startup time and memory usage for large models.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load_mmap<P: AsRef<Path>>(path: P) -> Result<Self> {
         let file = File::open(path.as_ref())?;
         // SAFETY: The file is opened read-only and we keep the Mmap alive

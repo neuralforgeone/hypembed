@@ -5,6 +5,7 @@
 /// BERT, DistilBERT, MiniLM, etc.
 
 use std::collections::HashMap;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 use crate::error::{HypEmbedError, Result};
 
@@ -23,18 +24,10 @@ pub struct Vocab {
 }
 
 impl Vocab {
-    /// Load vocabulary from a `vocab.txt` file.
+    /// Parse vocabulary from `vocab.txt` content.
     ///
     /// Each line is a token. Line number (0-indexed) is the token ID.
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = std::fs::read_to_string(path.as_ref()).map_err(|e| {
-            HypEmbedError::Tokenizer(format!(
-                "Failed to read vocab file '{}': {}",
-                path.as_ref().display(),
-                e
-            ))
-        })?;
-
+    pub fn from_str(content: &str) -> Result<Self> {
         let mut token_to_id = HashMap::new();
         let mut id_to_token = Vec::new();
 
@@ -48,7 +41,6 @@ impl Vocab {
             return Err(HypEmbedError::Tokenizer("Vocab file is empty".into()));
         }
 
-        // Validate required special tokens exist
         for special in &[CLS_TOKEN, SEP_TOKEN, PAD_TOKEN, UNK_TOKEN] {
             if !token_to_id.contains_key(*special) {
                 return Err(HypEmbedError::Tokenizer(format!(
@@ -62,6 +54,19 @@ impl Vocab {
             token_to_id,
             id_to_token,
         })
+    }
+
+    /// Load vocabulary from a `vocab.txt` file.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let content = std::fs::read_to_string(path.as_ref()).map_err(|e| {
+            HypEmbedError::Tokenizer(format!(
+                "Failed to read vocab file '{}': {}",
+                path.as_ref().display(),
+                e
+            ))
+        })?;
+        Self::from_str(&content)
     }
 
     /// Look up a token's ID. Returns UNK ID if not found.

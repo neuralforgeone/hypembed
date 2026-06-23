@@ -1,0 +1,23 @@
+[package]
+name = "hype-rag"
+version = "0.1.0"
+edition = "2021"
+description = "Local RAG CLI powered by hypembed"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/neuralforgeone/hypembed"
+
+[[bin]]
+name = "hype-rag"
+path = "src/main.rs"
+
+[dependencies]
+hypembed = { path = ".." }
+clap = { version = "4", features = ["derive"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+walkdir = "2"
+
+[dev-dependencies]
+tempfile = "3"

@@ -78,12 +78,7 @@ mod tests {
             "hello", "world", "un", "##aff", "##able",
             "rust", "##ing", "##s", "the", "a",
         ];
-        let content = tokens.join("\n");
-        let dir = std::env::temp_dir().join("hypembed_test_vocab");
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("vocab.txt");
-        std::fs::write(&path, &content).unwrap();
-        Vocab::load(&path).unwrap()
+        Vocab::from_str(&tokens.join("\n")).unwrap()
     }
 
     #[test]

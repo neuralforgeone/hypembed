@@ -1,4 +1,5 @@
 /target
+/mcps/
 Cargo.lock
 *.swp
 *.swo

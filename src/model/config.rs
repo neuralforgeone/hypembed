@@ -4,6 +4,7 @@
 /// Defines the architecture hyperparameters of a BERT-like model.
 
 use serde::Deserialize;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 use crate::error::{HypEmbedError, Result};
 
@@ -59,12 +60,18 @@ fn default_type_vocab_size() -> usize {
 }
 
 impl ModelConfig {
-    /// Load configuration from a `config.json` file.
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = std::fs::read_to_string(path.as_ref())?;
-        let config: ModelConfig = serde_json::from_str(&content)?;
+    /// Parse configuration from a JSON string.
+    pub fn from_json_str(json: &str) -> Result<Self> {
+        let config: ModelConfig = serde_json::from_str(json)?;
         config.validate()?;
         Ok(config)
+    }
+
+    /// Load configuration from a `config.json` file.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let content = std::fs::read_to_string(path.as_ref())?;
+        Self::from_json_str(&content)
     }
 
     /// Validate the configuration values.

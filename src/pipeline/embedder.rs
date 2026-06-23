@@ -15,8 +15,9 @@
 /// let embeddings = model.embed(&["hello world"], &options).unwrap();
 /// ```
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
-use crate::error::{HypEmbedError, Result};
+use crate::error::Result;
 use crate::tensor::normalize;
 use crate::tokenizer::Tokenizer;
 use crate::model::config::ModelConfig;
@@ -75,55 +76,69 @@ pub struct Embedder {
 }
 
 impl Embedder {
-    /// Load a model from a directory.
-    ///
-    /// The directory must contain:
-    /// - `config.json` — model configuration
-    /// - `vocab.txt` — tokenizer vocabulary
-    /// - `model.safetensors` — model weights
+    /// Load a model entirely from in-memory bytes (no filesystem access).
     ///
     /// # Arguments
-    /// - `model_dir`: Path to the model directory
-    pub fn load<P: AsRef<Path>>(model_dir: P) -> Result<Self> {
-        let dir = model_dir.as_ref();
-
-        // Load config
-        let config_path = dir.join("config.json");
-        if !config_path.exists() {
-            return Err(HypEmbedError::Model(format!(
-                "config.json not found in '{}'",
-                dir.display()
-            )));
-        }
-        let config = ModelConfig::load(&config_path)?;
-
-        // Load tokenizer
-        let vocab_path = dir.join("vocab.txt");
-        if !vocab_path.exists() {
-            return Err(HypEmbedError::Model(format!(
-                "vocab.txt not found in '{}'",
-                dir.display()
-            )));
-        }
-        // Determine if model uses lowercasing from config or default true
-        let do_lower_case = true; // BERT-uncased default
-        let tokenizer = Tokenizer::new(&vocab_path, do_lower_case)?;
-
-        // Load weights
-        let weights_path = dir.join("model.safetensors");
-        if !weights_path.exists() {
-            return Err(HypEmbedError::Model(format!(
-                "model.safetensors not found in '{}'",
-                dir.display()
-            )));
-        }
-        let weights = ModelWeights::load_mmap(&weights_path, &config)?;
+    /// - `config_json`: UTF-8 JSON model configuration
+    /// - `vocab_txt`: UTF-8 vocab.txt content
+    /// - `weights_bytes`: Raw SafeTensors file bytes
+    /// - `do_lower_case`: Whether to lowercase input text during tokenization
+    pub fn from_bytes(
+        config_json: &str,
+        vocab_txt: &str,
+        weights_bytes: &[u8],
+        do_lower_case: bool,
+    ) -> Result<Self> {
+        let config = ModelConfig::from_json_str(config_json)?;
+        let vocab = crate::tokenizer::vocab::Vocab::from_str(vocab_txt)?;
+        let tokenizer = Tokenizer::from_vocab(vocab, do_lower_case);
+        let weights = ModelWeights::from_bytes(weights_bytes, &config)?;
 
         Ok(Self {
             tokenizer,
             config,
             weights,
         })
+    }
+
+    /// Load a model from a directory.
+    ///
+    /// The directory must contain:
+    /// - `config.json` — model configuration
+    /// - `vocab.txt` — tokenizer vocabulary
+    /// - `model.safetensors` — model weights
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn load<P: AsRef<Path>>(model_dir: P) -> Result<Self> {
+        let dir = model_dir.as_ref();
+
+        let config_path = dir.join("config.json");
+        if !config_path.exists() {
+            return Err(crate::error::HypEmbedError::Model(format!(
+                "config.json not found in '{}'",
+                dir.display()
+            )));
+        }
+        let config_json = std::fs::read_to_string(&config_path)?;
+
+        let vocab_path = dir.join("vocab.txt");
+        if !vocab_path.exists() {
+            return Err(crate::error::HypEmbedError::Model(format!(
+                "vocab.txt not found in '{}'",
+                dir.display()
+            )));
+        }
+        let vocab_txt = std::fs::read_to_string(&vocab_path)?;
+
+        let weights_path = dir.join("model.safetensors");
+        if !weights_path.exists() {
+            return Err(crate::error::HypEmbedError::Model(format!(
+                "model.safetensors not found in '{}'",
+                dir.display()
+            )));
+        }
+        let weights_bytes = std::fs::read(&weights_path)?;
+
+        Self::from_bytes(&config_json, &vocab_txt, &weights_bytes, true)
     }
 
     /// Generate embeddings for one or more texts.

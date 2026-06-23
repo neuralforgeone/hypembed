@@ -8,6 +8,7 @@
 /// Supports BERT, MiniLM (BERT-compatible), and DistilBERT weight naming.
 /// DistilBERT uses different tensor names and lacks token_type_embeddings.
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::Tensor;
@@ -60,15 +61,21 @@ pub struct ModelWeights {
 }
 
 impl ModelWeights {
+    /// Load weights from in-memory SafeTensors bytes.
+    pub fn from_bytes(bytes: &[u8], config: &ModelConfig) -> Result<Self> {
+        let st = SafeTensorsFile::from_bytes(bytes)?;
+        Self::from_safetensors(&st, config)
+    }
+
     /// Load weights from a SafeTensors file.
-    ///
-    /// Maps HuggingFace BERT naming convention to our weight structure.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load<P: AsRef<Path>>(path: P, config: &ModelConfig) -> Result<Self> {
         let st = SafeTensorsFile::load(path)?;
         Self::from_safetensors(&st, config)
     }
 
     /// Load weights from a SafeTensors file using memory-mapped I/O.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load_mmap<P: AsRef<Path>>(path: P, config: &ModelConfig) -> Result<Self> {
         let st = SafeTensorsFile::load_mmap(path)?;
         Self::from_safetensors(&st, config)

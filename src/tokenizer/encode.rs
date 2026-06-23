@@ -3,11 +3,13 @@
 /// Combines pre-tokenization, WordPiece, and special token handling
 /// into a complete encoding pipeline.
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 use crate::error::{HypEmbedError, Result};
 use crate::tokenizer::pre_tokenize;
 use crate::tokenizer::vocab::Vocab;
 use crate::tokenizer::wordpiece;
+#[cfg(not(target_arch = "wasm32"))]
 use rayon::prelude::*;
 
 /// The output of tokenizing a single text.
@@ -33,10 +35,7 @@ pub struct Tokenizer {
 
 impl Tokenizer {
     /// Create a new tokenizer from a vocabulary file.
-    ///
-    /// # Arguments
-    /// - `vocab_path`: Path to `vocab.txt`
-    /// - `do_lower_case`: Whether to lowercase input text
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn new<P: AsRef<Path>>(vocab_path: P, do_lower_case: bool) -> Result<Self> {
         let vocab = Vocab::load(vocab_path)?;
         Ok(Self {
@@ -114,14 +113,24 @@ impl Tokenizer {
         })
     }
 
-    /// Encode a batch of texts in parallel.
+    /// Encode a batch of texts.
     ///
-    /// Uses rayon for parallel tokenization. All encodings are padded to `max_length`.
+    /// Uses rayon on native targets; sequential on `wasm32`.
     pub fn encode_batch(&self, texts: &[&str], max_length: usize) -> Result<Vec<Encoding>> {
-        texts
-            .par_iter()
-            .map(|text| self.encode(text, max_length))
-            .collect()
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            texts
+                .par_iter()
+                .map(|text| self.encode(text, max_length))
+                .collect()
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            texts
+                .iter()
+                .map(|text| self.encode(text, max_length))
+                .collect()
+        }
     }
 
     /// Get the vocabulary size.
@@ -146,12 +155,8 @@ mod tests {
             "rust", "##ing", "##s", "the", "a",
             ",", ".", "!", "?",
         ];
-        let content = tokens.join("\n");
-        let dir = std::env::temp_dir().join("hypembed_test_encode");
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("vocab.txt");
-        std::fs::write(&path, &content).unwrap();
-        Tokenizer::new(&path, true).unwrap()
+        let vocab = Vocab::from_str(&tokens.join("\n")).unwrap();
+        Tokenizer::from_vocab(vocab, true)
     }
 
     #[test]

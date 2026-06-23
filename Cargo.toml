@@ -1,6 +1,10 @@
+[workspace]
+members = [".", "hype-rag", "hypembed-wasm"]
+resolver = "2"
+
 [package]
 name = "hypembed"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.70"
 description = "Pure-Rust BERT-compatible text embedding inference for local-first applications."
@@ -16,9 +20,11 @@ categories = ["science", "text-processing"]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
+unicode-normalization = "0.1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 memmap2 = "0.9"
 rayon = "1.10"
-unicode-normalization = "0.1"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -26,3 +32,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [[bench]]
 name = "inference_bench"
 harness = false
+
+[[example]]
+name = "write_tiny_model"
+path = "examples/write_tiny_model.rs"
