@@ -8,6 +8,7 @@ set REPO_SCOPE_LOG=%SCRATCH%\repo-scope.log
 mkdir "%SCRATCH%" 2>nul
 cd /d "%REPO%"
 
+del /q "%SCRATCH%\mcps-absent.log" 2>nul
 rmdir /s /q "%REPO%\mcps" 2>nul
 
 echo === repo scope tests === > "%REPO_SCOPE_LOG%"
