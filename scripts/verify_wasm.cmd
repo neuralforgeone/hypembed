@@ -16,7 +16,7 @@ echo repo=%REPO% >> "%LOG1%"
 echo target=%TARGET% >> "%LOG1%"
 echo time=%DATE% %TIME% >> "%LOG1%"
 echo. >> "%LOG1%"
-cargo clean -p hypembed-wasm >> "%LOG1%" 2>&1
+cargo clean -p hypembed-wasm --target %TARGET% >> "%LOG1%" 2>&1
 cargo build -p hypembed-wasm --target %TARGET% -vv >> "%LOG1%" 2>&1
 if errorlevel 1 exit /b 1
 
