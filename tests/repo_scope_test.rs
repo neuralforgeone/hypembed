@@ -48,11 +48,32 @@ fn public_api_exports_are_send_sync() {
 }
 
 #[test]
-fn public_api_surface_uses_only_documented_reexports() {
+fn lib_rs_keeps_internals_pub_crate_not_public() {
+    let lib_rs = std::fs::read_to_string(repo_root().join("src/lib.rs")).expect("read lib.rs");
+
+    for module in ["tensor", "tokenizer", "model", "pipeline"] {
+        assert!(
+            lib_rs.contains(&format!("pub(crate) mod {module};")),
+            "src/lib.rs must declare `pub(crate) mod {module};`"
+        );
+        assert!(
+            !lib_rs.contains(&format!("#[doc(hidden)]\npub mod {module};")),
+            "src/lib.rs must not expose public mod {module}"
+        );
+    }
+
+    assert!(
+        !lib_rs.contains("pub fn config("),
+        "public config() must not be re-exported from lib.rs"
+    );
+}
+
+#[test]
+fn external_consumer_cannot_reference_internal_modules() {
+    // Integration tests compile as an external crate. This file intentionally uses only
+    // the stable re-exports; if tensor/model/tokenizer/pipeline were public `mod` again,
+    // downstream could depend on them — the lib_rs_keeps_internals test guards that.
     use hypembed::{Embedder, EmbeddingOptions, HypEmbedError, PoolingStrategy};
 
-    let _ = std::any::type_name::<Embedder>();
-    let _ = std::any::type_name::<EmbeddingOptions>();
-    let _ = std::any::type_name::<PoolingStrategy>();
-    let _ = std::any::type_name::<HypEmbedError>();
+    fn _stable_only(_: Embedder, _: EmbeddingOptions, _: PoolingStrategy, _: HypEmbedError) {}
 }

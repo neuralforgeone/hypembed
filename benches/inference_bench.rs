@@ -1,68 +1,52 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use hypembed::{Embedder, EmbeddingOptions, PoolingStrategy};
 
-fn matmul_bench(c: &mut Criterion) {
-    use hypembed::tensor::matmul;
-    use hypembed::tensor::{Shape, Tensor};
-
-    let sizes = [(64, 64), (128, 128), (256, 256), (384, 384)];
-
-    for (m, n) in sizes {
-        let a = Tensor::full(Shape::new(vec![m, n]), 0.01);
-        let b = Tensor::full(Shape::new(vec![n, m]), 0.01);
-        c.bench_function(&format!("matmul_{}x{}", m, n), |bench| {
-            bench.iter(|| {
-                black_box(matmul::matmul(&a, &b).unwrap());
-            });
-        });
-    }
+mod fixtures {
+    include!("../tests/common/mod.rs");
 }
 
-fn softmax_bench(c: &mut Criterion) {
-    use hypembed::tensor::softmax;
-    use hypembed::tensor::{Shape, Tensor};
+fn tiny_embedder() -> Embedder {
+    use fixtures::*;
+    Embedder::from_bytes(
+        TINY_CONFIG_JSON,
+        &tiny_vocab_txt(),
+        &tiny_safetensors_bytes(),
+        true,
+    )
+    .expect("tiny embedder for benchmarks")
+}
 
-    let t = Tensor::full(Shape::new(vec![32, 128]), 0.5);
-    c.bench_function("softmax_32x128", |bench| {
+fn embed_single_bench(c: &mut Criterion) {
+    let embedder = tiny_embedder();
+    let options = EmbeddingOptions::default()
+        .with_max_length(16)
+        .with_pooling(PoolingStrategy::Mean)
+        .with_normalize(true);
+    let text = "hello world rust embedding inference benchmark";
+
+    c.bench_function("embed_single_short", |bench| {
         bench.iter(|| {
-            black_box(softmax::softmax(&t).unwrap());
+            black_box(embedder.embed(&[text], &options).expect("embed"));
         });
     });
 }
 
-fn layernorm_bench(c: &mut Criterion) {
-    use hypembed::tensor::layernorm;
-    use hypembed::tensor::{Shape, Tensor};
+fn embed_batch_bench(c: &mut Criterion) {
+    let embedder = tiny_embedder();
+    let options = EmbeddingOptions::default().with_max_length(16);
+    let texts = [
+        "semantic search with embeddings",
+        "machine learning on device",
+        "rust systems programming",
+        "transformer encoder forward pass",
+    ];
 
-    let hidden = 384;
-    let seq = 128;
-    let t = Tensor::full(Shape::new(vec![seq, hidden]), 0.5);
-    let gamma = Tensor::ones(Shape::new(vec![hidden]));
-    let beta = Tensor::zeros(Shape::new(vec![hidden]));
-
-    c.bench_function("layernorm_128x384", |bench| {
+    c.bench_function("embed_batch_4", |bench| {
         bench.iter(|| {
-            black_box(layernorm::layer_norm(&t, &gamma, &beta, 1e-12).unwrap());
+            black_box(embedder.embed(&texts, &options).expect("embed batch"));
         });
     });
 }
 
-fn l2_normalize_bench(c: &mut Criterion) {
-    use hypembed::tensor::normalize;
-    use hypembed::tensor::{Shape, Tensor};
-
-    let t = Tensor::full(Shape::new(vec![32, 384]), 0.5);
-    c.bench_function("l2_normalize_32x384", |bench| {
-        bench.iter(|| {
-            black_box(normalize::l2_normalize(&t, 1e-12).unwrap());
-        });
-    });
-}
-
-criterion_group!(
-    benches,
-    matmul_bench,
-    softmax_bench,
-    layernorm_bench,
-    l2_normalize_bench
-);
+criterion_group!(benches, embed_single_bench, embed_batch_bench);
 criterion_main!(benches);

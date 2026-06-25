@@ -176,8 +176,10 @@ impl Embedder {
             return Ok(vec![]);
         }
 
+        let max_length = self.resolve_max_length(options.max_length)?;
+
         // Step 1: Tokenize
-        let encodings = self.tokenizer.encode_batch(texts, options.max_length)?;
+        let encodings = self.tokenizer.encode_batch(texts, max_length)?;
 
         let input_ids: Vec<Vec<u32>> = encodings.iter().map(|e| e.input_ids.clone()).collect();
         let attention_mask: Vec<Vec<u32>> =
@@ -231,9 +233,24 @@ impl Embedder {
         self.config.hidden_size
     }
 
-    /// Get the model configuration.
-    pub fn config(&self) -> &ModelConfig {
-        &self.config
+    /// Maximum sequence length supported by this model (`max_position_embeddings` from config).
+    pub fn max_position_embeddings(&self) -> usize {
+        self.config.max_position_embeddings
+    }
+
+    fn resolve_max_length(&self, requested: usize) -> Result<usize> {
+        if requested < 2 {
+            return Err(crate::error::HypEmbedError::invalid_input(
+                "max_length must be at least 2 (room for [CLS] and [SEP])",
+            ));
+        }
+        let cap = self.config.max_position_embeddings;
+        if requested > cap {
+            return Err(crate::error::HypEmbedError::invalid_input(format!(
+                "max_length {requested} exceeds model max_position_embeddings ({cap})"
+            )));
+        }
+        Ok(requested)
     }
 }
 
@@ -271,6 +288,37 @@ mod tests {
         let options = EmbeddingOptions::default();
         let out = embedder.embed(&[], &options).unwrap();
         assert!(out.is_empty());
+    }
+
+    #[test]
+    fn embed_empty_string_produces_valid_vector() {
+        let embedder = tiny_embedder();
+        let options = EmbeddingOptions::default().with_max_length(16);
+        let out = embedder.embed(&[""], &options).unwrap();
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].len(), embedder.hidden_size());
+    }
+
+    #[test]
+    fn embed_rejects_max_length_above_model_cap() {
+        let embedder = tiny_embedder();
+        let options = EmbeddingOptions::default().with_max_length(10_000);
+        let err = embedder.embed(&["hello"], &options).unwrap_err();
+        assert!(
+            matches!(err, crate::error::HypEmbedError::InvalidInput { .. }),
+            "expected InvalidInput, got {err:?}"
+        );
+    }
+
+    #[test]
+    fn embed_rejects_max_length_below_two() {
+        let embedder = tiny_embedder();
+        let options = EmbeddingOptions::default().with_max_length(1);
+        let err = embedder.embed(&["hello"], &options).unwrap_err();
+        assert!(matches!(
+            err,
+            crate::error::HypEmbedError::InvalidInput { .. }
+        ));
     }
 
     #[test]

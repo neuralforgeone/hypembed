@@ -21,7 +21,7 @@
 //! - [`PoolingStrategy`] — mean or CLS pooling
 //! - [`HypEmbedError`] — typed failures with actionable context
 //!
-//! Low-level tensor, tokenizer, and model modules are `#[doc(hidden)]` and not part of the stable contract.
+//! Low-level tensor, tokenizer, and model modules are `pub(crate)` and not part of the stable contract.
 //!
 //! ## Quick Start (directory)
 //!
@@ -66,14 +66,10 @@
 /// Error types and the [`HypEmbedError`] result alias.
 pub mod error;
 
-#[doc(hidden)]
-pub mod model;
-#[doc(hidden)]
-pub mod pipeline;
-#[doc(hidden)]
-pub mod tensor;
-#[doc(hidden)]
-pub mod tokenizer;
+pub(crate) mod model;
+pub(crate) mod pipeline;
+pub(crate) mod tensor;
+pub(crate) mod tokenizer;
 
 pub use error::HypEmbedError;
 pub use model::pool::PoolingStrategy;

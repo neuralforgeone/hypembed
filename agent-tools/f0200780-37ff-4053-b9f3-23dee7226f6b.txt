@@ -1,0 +1,1682 @@
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\benches\inference_bench.rs:1:
+-use criterion::{criterion_group, criterion_main, Criterion, black_box};
++use criterion::{black_box, criterion_group, criterion_main, Criterion};
+ 
+ fn matmul_bench(c: &mut Criterion) {
+-    use hypembed::tensor::{Tensor, Shape};
+     use hypembed::tensor::matmul;
++    use hypembed::tensor::{Shape, Tensor};
+ 
+     let sizes = [(64, 64), (128, 128), (256, 256), (384, 384)];
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\benches\inference_bench.rs:18:
+ }
+ 
+ fn softmax_bench(c: &mut Criterion) {
+-    use hypembed::tensor::{Tensor, Shape};
+     use hypembed::tensor::softmax;
++    use hypembed::tensor::{Shape, Tensor};
+ 
+     let t = Tensor::full(Shape::new(vec![32, 128]), 0.5);
+     c.bench_function("softmax_32x128", |bench| {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\benches\inference_bench.rs:30:
+ }
+ 
+ fn layernorm_bench(c: &mut Criterion) {
+-    use hypembed::tensor::{Tensor, Shape};
+     use hypembed::tensor::layernorm;
++    use hypembed::tensor::{Shape, Tensor};
+ 
+     let hidden = 384;
+     let seq = 128;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\benches\inference_bench.rs:47:
+ }
+ 
+ fn l2_normalize_bench(c: &mut Criterion) {
+-    use hypembed::tensor::{Tensor, Shape};
+     use hypembed::tensor::normalize;
++    use hypembed::tensor::{Shape, Tensor};
+ 
+     let t = Tensor::full(Shape::new(vec![32, 384]), 0.5);
+     c.bench_function("l2_normalize_32x384", |bench| {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\benches\inference_bench.rs:58:
+     });
+ }
+ 
+-criterion_group!(benches, matmul_bench, softmax_bench, layernorm_bench, l2_normalize_bench);
++criterion_group!(
++    benches,
++    matmul_bench,
++    softmax_bench,
++    layernorm_bench,
++    l2_normalize_bench
++);
+ criterion_main!(benches);
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\examples\basic_embed.rs:23:
+ 
+     let model = match Embedder::load(model_dir) {
+         Ok(m) => {
+-            println!("Model loaded successfully (hidden_size={})", m.hidden_size());
++            println!(
++                "Model loaded successfully (hidden_size={})",
++                m.hidden_size()
++            );
+             m
+         }
+         Err(e) => {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\examples\write_tiny_model.rs:22:
+     common::write_tiny_model_dir(&dir);
+     println!("wrote tiny model to {}", dir.display());
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\chunk.rs:68:
+         }
+     }
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\error.rs:48:
+         Self::Config(message.into())
+     }
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\index.rs:57:
+             .to_string()
+             .replace('\\', "/");
+ 
+-        let chunks = chunk_text(
+-            &rel,
+-            &content,
+-            DEFAULT_CHUNK_CHARS,
+-            DEFAULT_OVERLAP_CHARS,
+-        );
++        let chunks = chunk_text(&rel, &content, DEFAULT_CHUNK_CHARS, DEFAULT_OVERLAP_CHARS);
+ 
+         if chunks.is_empty() {
+             continue;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\index.rs:72:
+         let embeddings = embedder.embed(&texts, &options)?;
+ 
+         for (chunk, embedding) in chunks.iter().zip(embeddings.iter()) {
+-            store.insert_chunk(
+-                &chunk.path,
+-                chunk.chunk_index,
+-                &chunk.text,
+-                embedding,
+-            )?;
++            store.insert_chunk(&chunk.path, chunk.chunk_index, &chunk.text, embedding)?;
+             indexed += 1;
+         }
+     }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\index.rs:91:
+         Some("md") | Some("txt")
+     )
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\lib.rs:12:
+ pub use index::index_directory;
+ pub use search::{cosine_similarity, search_chunks};
+ pub use store::ChunkStore;
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\search.rs:73:
+         assert!(cosine_similarity(&a, &b).abs() < 1e-5);
+     }
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\store.rs:48:
+     }
+ 
+     pub fn model_dir(&self) -> Result<Option<String>> {
+-        let mut stmt = self
+-            .conn
+-            .prepare("SELECT value FROM meta WHERE key = ?1")?;
++        let mut stmt = self.conn.prepare("SELECT value FROM meta WHERE key = ?1")?;
+         let mut rows = stmt.query(params![CONFIG_KEY])?;
+         if let Some(row) = rows.next()? {
+             Ok(Some(row.get(0)?))
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\store.rs:80:
+     }
+ 
+     pub fn all_chunks(&self) -> Result<Vec<StoredChunk>> {
+-        let mut stmt = self.conn.prepare(
+-            "SELECT path, chunk_index, text, embedding FROM chunks ORDER BY id",
+-        )?;
++        let mut stmt = self
++            .conn
++            .prepare("SELECT path, chunk_index, text, embedding FROM chunks ORDER BY id")?;
+         let rows = stmt.query_map([], |row| {
+             let path: String = row.get(0)?;
+             let chunk_index: i64 = row.get(1)?;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\store.rs:95:
+         for row in rows {
+             let (path, chunk_index, text, blob) = row?;
+             if blob.len() % 4 != 0 {
+-                return Err(HypeRagError::Other(
+-                    "invalid embedding blob length".into(),
+-                ));
++                return Err(HypeRagError::Other("invalid embedding blob length".into()));
+             }
+             let embedding: Vec<f32> = blob
+                 .chunks_exact(4)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\store.rs:128:
+     pub text: String,
+     pub embedding: Vec<f32>,
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\text_boundary.rs:85:
+         }
+     }
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\src\main.rs:145:
+ fn truncate(text: &str, max: usize) -> String {
+     text_boundary::truncate_chars(text, max)
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\tests\integration_test.rs:50:
+     );
+     assert!(!hits[0].path.is_empty());
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\tests\write_fixture.rs:10:
+     for file in ["config.json", "vocab.txt", "model.safetensors"] {
+         let path = dir.path().join(file);
+         assert!(path.is_file(), "missing fixture file: {}", path.display());
+-        assert!(std::fs::metadata(&path).unwrap().len() > 0, "empty fixture: {file}");
++        assert!(
++            std::fs::metadata(&path).unwrap().len() > 0,
++            "empty fixture: {file}"
++        );
+     }
+ 
+     let config = std::fs::read_to_string(dir.path().join("config.json")).unwrap();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hype-rag\tests\write_fixture.rs:25:
+     common::write_tiny_model_dir(&model_dir);
+     assert!(model_dir.join("vocab.txt").is_file());
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hypembed-wasm\src\lib.rs:12:
+ impl WasmEmbedder {
+     /// Create an embedder from in-memory model bytes (no filesystem access).
+     #[wasm_bindgen(constructor)]
+-    pub fn new(config_json: &str, vocab_txt: &str, weights: &[u8]) -> Result<WasmEmbedder, JsValue> {
++    pub fn new(
++        config_json: &str,
++        vocab_txt: &str,
++        weights: &[u8],
++    ) -> Result<WasmEmbedder, JsValue> {
+         let inner = Embedder::from_bytes(config_json, vocab_txt, weights, true)
+             .map_err(|e| JsValue::from_str(&e.to_string()))?;
+         Ok(WasmEmbedder { inner })
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hypembed-wasm\src\lib.rs:38:
+             .inner
+             .embed(&[text], &options)
+             .map_err(|e| JsValue::from_str(&e.to_string()))?;
+-        out.into_iter().next().ok_or_else(|| JsValue::from_str("empty embedding result"))
++        out.into_iter()
++            .next()
++            .ok_or_else(|| JsValue::from_str("empty embedding result"))
+     }
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hypembed-wasm\src\lib.rs:52:
+         let _ = WasmEmbedder::new;
+     }
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\hypembed-wasm\tests\embed_native.rs:17:
+     let norm: f32 = vector.iter().map(|x| x * x).sum::<f32>().sqrt();
+     assert!((norm - 1.0).abs() < 1e-4);
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\error\mod.rs:94:
+ 
+ /// Convenience result alias used throughout the crate.
+ pub type Result<T> = std::result::Result<T, HypEmbedError>;
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\lib.rs:64:
+ /// Error types and the [`HypEmbedError`] result alias.
+ pub mod error;
+ 
+-pub(crate) mod tensor;
+-pub(crate) mod tokenizer;
+ pub(crate) mod model;
+ pub(crate) mod pipeline;
++pub(crate) mod tensor;
++pub(crate) mod tokenizer;
+ 
+ pub use error::HypEmbedError;
+ pub use model::pool::PoolingStrategy;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\lib.rs:74:
+ pub use pipeline::embedder::{Embedder, EmbeddingOptions};
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\attention.rs:16:
+ /// // Concatenate heads: [batch * heads, seq, head_dim] → [batch, seq, hidden]
+ /// output = context @ Wo + bo
+ /// ```
+-
+ use crate::error::Result;
+-use crate::tensor::{Tensor, Shape};
++use crate::model::weights::AttentionWeights;
+ use crate::tensor::matmul;
+ use crate::tensor::ops;
+ use crate::tensor::softmax;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\attention.rs:25:
+-use crate::model::weights::AttentionWeights;
++use crate::tensor::{Shape, Tensor};
+ 
+ /// Attention mask value for padding positions.
+ /// Added to scores before softmax to effectively zero out padding attention.
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\attention.rs:196:
+         let t = Tensor::from_vec(
+             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+             Shape::new(vec![1, 2, 3, 1]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let tt = transpose_1_2(&t, 1, 2, 3, 1).unwrap();
+         assert_eq!(tt.shape().dims(), &[1, 3, 2, 1]);
+         // Original: [[1,2,3],[4,5,6]] → transposed: [[1,4],[2,5],[3,6]]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\attention.rs:208:
+         let t = Tensor::from_vec(
+             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+             Shape::new(vec![1, 2, 3]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let tt = batched_transpose_last_two(&t, 1, 2, 3).unwrap();
+         assert_eq!(tt.shape().dims(), &[1, 3, 2]);
+         assert_eq!(tt.data(), &[1.0, 4.0, 2.0, 5.0, 3.0, 6.0]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\config.rs:1:
++use crate::error::{HypEmbedError, Result};
+ /// Model configuration.
+ ///
+ /// Parsed from a `config.json` file (HuggingFace format).
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\config.rs:4:
+ /// Defines the architecture hyperparameters of a BERT-like model.
+-
+ use serde::Deserialize;
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::path::Path;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\config.rs:9:
+-use crate::error::{HypEmbedError, Result};
+ 
+ /// Configuration for a BERT-like encoder model.
+ #[derive(Debug, Clone, Deserialize)]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\embedding.rs:4:
+ /// ```text
+ /// output = LayerNorm(word_embed + position_embed + token_type_embed)
+ /// ```
+-
+ use crate::error::Result;
+-use crate::tensor::{Tensor, Shape};
+ use crate::tensor::layernorm;
++use crate::tensor::{Shape, Tensor};
+ 
+ /// Compute embeddings for a batch of token sequences.
+ ///
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\embedding.rs:51:
+             let pos_offset = s * hidden_size;
+ 
+             for h in 0..hidden_size {
+-                output[out_offset + h] =
+-                    word_data[word_offset + h]
+-                    + pos_data[pos_offset + h];
++                output[out_offset + h] = word_data[word_offset + h] + pos_data[pos_offset + h];
+             }
+ 
+             // + token_type_embed[type_id] (if available)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\embedding.rs:67:
+         }
+     }
+ 
+-    let embed_tensor = Tensor::from_vec(output, Shape::new(vec![batch_size, seq_len, hidden_size]))?;
++    let embed_tensor =
++        Tensor::from_vec(output, Shape::new(vec![batch_size, seq_len, hidden_size]))?;
+ 
+     // Apply LayerNorm
+     layernorm::layer_norm(&embed_tensor, ln_weight, ln_bias, eps)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\embedding.rs:94:
+         let token_type_ids = vec![vec![0u32, 0, 0], vec![0, 0, 0]];
+ 
+         let result = compute_embeddings(
+-            &input_ids, &token_type_ids,
+-            &word_emb, &pos_emb, Some(&tt_emb),
+-            &ln_w, &ln_b, 1e-12,
+-        ).unwrap();
++            &input_ids,
++            &token_type_ids,
++            &word_emb,
++            &pos_emb,
++            Some(&tt_emb),
++            &ln_w,
++            &ln_b,
++            1e-12,
++        )
++        .unwrap();
+ 
+         assert_eq!(result.shape().dims(), &[2, 3, 4]); // [batch, seq, hidden]
+     }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\encoder.rs:9:
+ /// ```
+ ///
+ /// The encoder stack is N layers applied sequentially.
+-
+ use crate::error::Result;
+-use crate::tensor::Tensor;
+-use crate::tensor::ops;
+-use crate::tensor::layernorm;
+-use crate::model::config::ModelConfig;
+-use crate::model::weights::EncoderLayerWeights;
+ use crate::model::attention;
++use crate::model::config::ModelConfig;
+ use crate::model::ff;
++use crate::model::weights::EncoderLayerWeights;
++use crate::tensor::layernorm;
++use crate::tensor::ops;
++use crate::tensor::Tensor;
+ 
+ /// Run a single encoder layer.
+ pub fn encoder_layer(
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\encoder.rs:74:
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+-    use crate::tensor::Shape;
+     use crate::model::weights::*;
++    use crate::tensor::Shape;
+ 
+     fn make_tiny_config() -> ModelConfig {
+         ModelConfig {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\ff.rs:8:
+ ///
+ /// W1: [intermediate_size, hidden_size] (stored transposed in HF convention)
+ /// W2: [hidden_size, intermediate_size]
+-
+ use crate::error::Result;
+-use crate::tensor::{Tensor, Shape};
++use crate::model::weights::FeedForwardWeights;
++use crate::tensor::activation;
+ use crate::tensor::matmul;
+ use crate::tensor::ops;
+-use crate::tensor::activation;
+-use crate::model::weights::FeedForwardWeights;
++use crate::tensor::{Shape, Tensor};
+ 
+ /// Run the feed-forward block.
+ ///
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\ff.rs:42:
+ 
+     // Output: intermediate @ W2^T + b2
+     let w2_t = weights.output_weight.transpose_2d()?;
+-    let output = ops::add_bias(
+-        &matmul::matmul(&intermediate, &w2_t)?,
+-        &weights.output_bias,
+-    )?;
++    let output = ops::add_bias(&matmul::matmul(&intermediate, &w2_t)?, &weights.output_bias)?;
+ 
+     // Reshape back to 3D
+     output.reshape(Shape::new(vec![batch_size, seq_len, hidden_size]))
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\mod.rs:11:
+ pub(crate) mod pool;
+ pub(crate) mod safetensors;
+ pub(crate) mod weights;
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\pool.rs:12:
+ /// ## CLS Pooling
+ ///
+ /// Simply takes the hidden state at position 0 (the `[CLS]` token).
+-
+ use crate::error::Result;
+-use crate::tensor::{Tensor, Shape};
++use crate::tensor::{Shape, Tensor};
+ 
+ /// Pooling strategy for combining token embeddings into a sentence embedding.
+ ///
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\pool.rs:122:
+         let hidden = Tensor::from_vec(
+             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+             Shape::new(vec![1, 3, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let mask = vec![vec![1u32, 1, 1]];
+         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
+         assert_eq!(pooled.shape().dims(), &[1, 2]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\pool.rs:137:
+         let hidden = Tensor::from_vec(
+             vec![1.0, 2.0, 3.0, 4.0, 100.0, 200.0], // last token should be ignored
+             Shape::new(vec![1, 3, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let mask = vec![vec![1u32, 1, 0]]; // only first 2 real
+         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
+         // mean of [1,3] = 2.0, mean of [2,4] = 3.0
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\pool.rs:150:
+         let hidden = Tensor::from_vec(
+             vec![10.0, 20.0, 1.0, 2.0, 3.0, 4.0],
+             Shape::new(vec![1, 3, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let mask = vec![vec![1u32, 1, 1]];
+         let pooled = pool(&hidden, &mask, PoolingStrategy::Cls).unwrap();
+         assert_eq!(pooled.data(), &[10.0, 20.0]); // position 0
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\pool.rs:164:
+                 5.0, 6.0, 7.0, 8.0, // batch 1, seq 0, seq 1
+             ],
+             Shape::new(vec![2, 2, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let mask = vec![vec![1u32, 1], vec![1, 0]];
+         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
+         assert_eq!(pooled.shape().dims(), &[2, 2]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:1:
++use crate::error::{HypEmbedError, Result};
++use crate::tensor::{Shape, Tensor};
++use serde::Deserialize;
+ /// SafeTensors format parser.
+ ///
+ /// SafeTensors is a simple, safe binary format for storing tensors:
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:18:
+ ///
+ /// `load_mmap()` uses `memmap2` to memory-map the file, avoiding a full
+ /// copy into heap memory. The `DataStore` enum abstracts over owned vs mapped storage.
+-
+ use std::collections::HashMap;
+-use serde::Deserialize;
+-use crate::error::{HypEmbedError, Result};
+-use crate::tensor::{Tensor, Shape};
+ 
+ #[cfg(not(target_arch = "wasm32"))]
+-use std::path::Path;
++use memmap2::Mmap;
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::fs::File;
+ #[cfg(not(target_arch = "wasm32"))]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:32:
+-use memmap2::Mmap;
++use std::path::Path;
+ 
+ /// Metadata for a single tensor in a SafeTensors file.
+ #[derive(Debug, Deserialize)]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:81:
+         }
+ 
+         let header_size = u64::from_le_bytes([
+-            bytes[0], bytes[1], bytes[2], bytes[3],
+-            bytes[4], bytes[5], bytes[6], bytes[7],
++            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+         ]) as usize;
+ 
+         let header_end = 8 + header_size;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:128:
+         }
+ 
+         let header_size = u64::from_le_bytes([
+-            mmap[0], mmap[1], mmap[2], mmap[3],
+-            mmap[4], mmap[5], mmap[6], mmap[7],
++            mmap[0], mmap[1], mmap[2], mmap[3], mmap[4], mmap[5], mmap[6], mmap[7],
+         ]) as usize;
+ 
+         let header_end = 8 + header_size;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:164:
+                 continue;
+             }
+             let info: TensorInfo = serde_json::from_value(value.clone()).map_err(|e| {
+-                HypEmbedError::Model(format!(
+-                    "Failed to parse tensor info for '{}': {}",
+-                    name, e
+-                ))
++                HypEmbedError::Model(format!("Failed to parse tensor info for '{}': {}", name, e))
+             })?;
+             tensors.insert(name.clone(), info);
+         }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:196:
+         if end > data.len() {
+             return Err(HypEmbedError::Model(format!(
+                 "Tensor '{}' data offsets [{}, {}) exceed data section size {}",
+-                name, start, end, data.len()
++                name,
++                start,
++                end,
++                data.len()
+             )));
+         }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:209:
+                 if raw.len() != expected_bytes {
+                     return Err(HypEmbedError::Model(format!(
+                         "Tensor '{}': expected {} bytes for F32 shape {:?}, got {}",
+-                        name, expected_bytes, info.shape, raw.len()
++                        name,
++                        expected_bytes,
++                        info.shape,
++                        raw.len()
+                     )));
+                 }
+                 let floats: Vec<f32> = raw
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:223:
+                 if raw.len() != expected_bytes {
+                     return Err(HypEmbedError::Model(format!(
+                         "Tensor '{}': expected {} bytes for F16 shape {:?}, got {}",
+-                        name, expected_bytes, info.shape, raw.len()
++                        name,
++                        expected_bytes,
++                        info.shape,
++                        raw.len()
+                     )));
+                 }
+                 let floats: Vec<f32> = raw
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\safetensors.rs:240:
+                 if raw.len() != expected_bytes {
+                     return Err(HypEmbedError::Model(format!(
+                         "Tensor '{}': expected {} bytes for BF16 shape {:?}, got {}",
+-                        name, expected_bytes, info.shape, raw.len()
++                        name,
++                        expected_bytes,
++                        info.shape,
++                        raw.len()
+                     )));
+                 }
+                 let floats: Vec<f32> = raw
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:1:
++use crate::error::{HypEmbedError, Result};
++use crate::model::config::ModelConfig;
++use crate::model::safetensors::SafeTensorsFile;
++use crate::tensor::Tensor;
+ /// Weight loading and management.
+ ///
+ /// Loads model weights from a SafeTensors file, maps them to the correct
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:10:
+ 
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::path::Path;
+-use crate::error::{HypEmbedError, Result};
+-use crate::tensor::Tensor;
+-use crate::model::config::ModelConfig;
+-use crate::model::safetensors::SafeTensorsFile;
+ 
+ /// Weights for a single attention layer.
+ #[derive(Debug)]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:93:
+     /// Load BERT/MiniLM weights (standard HuggingFace naming).
+     fn load_bert(st: &SafeTensorsFile, config: &ModelConfig) -> Result<Self> {
+         // Embedding weights — try with and without "bert." prefix
+-        let word_embeddings = st.get_tensor("embeddings.word_embeddings.weight")
++        let word_embeddings = st
++            .get_tensor("embeddings.word_embeddings.weight")
+             .or_else(|_| st.get_tensor("bert.embeddings.word_embeddings.weight"))?;
+-        let position_embeddings = st.get_tensor("embeddings.position_embeddings.weight")
++        let position_embeddings = st
++            .get_tensor("embeddings.position_embeddings.weight")
+             .or_else(|_| st.get_tensor("bert.embeddings.position_embeddings.weight"))?;
+-        let token_type_embeddings = st.get_tensor("embeddings.token_type_embeddings.weight")
++        let token_type_embeddings = st
++            .get_tensor("embeddings.token_type_embeddings.weight")
+             .or_else(|_| st.get_tensor("bert.embeddings.token_type_embeddings.weight"))?;
+-        let embedding_ln_weight = st.get_tensor("embeddings.LayerNorm.weight")
++        let embedding_ln_weight = st
++            .get_tensor("embeddings.LayerNorm.weight")
+             .or_else(|_| st.get_tensor("bert.embeddings.LayerNorm.weight"))?;
+-        let embedding_ln_bias = st.get_tensor("embeddings.LayerNorm.bias")
++        let embedding_ln_bias = st
++            .get_tensor("embeddings.LayerNorm.bias")
+             .or_else(|_| st.get_tensor("bert.embeddings.LayerNorm.bias"))?;
+ 
+         // Validate embedding shapes
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:108:
+-        Self::validate_shape(&word_embeddings, &[config.vocab_size, config.hidden_size], "word_embeddings")?;
+-        Self::validate_shape(&position_embeddings, &[config.max_position_embeddings, config.hidden_size], "position_embeddings")?;
+-        Self::validate_shape(&token_type_embeddings, &[config.type_vocab_size, config.hidden_size], "token_type_embeddings")?;
++        Self::validate_shape(
++            &word_embeddings,
++            &[config.vocab_size, config.hidden_size],
++            "word_embeddings",
++        )?;
++        Self::validate_shape(
++            &position_embeddings,
++            &[config.max_position_embeddings, config.hidden_size],
++            "position_embeddings",
++        )?;
++        Self::validate_shape(
++            &token_type_embeddings,
++            &[config.type_vocab_size, config.hidden_size],
++            "token_type_embeddings",
++        )?;
+ 
+         // Load each encoder layer
+         let mut layers = Vec::with_capacity(config.num_hidden_layers);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:134:
+     /// - Attention: `q_lin`, `k_lin`, `v_lin`, `out_lin` instead of `self.query`, etc.
+     /// - LayerNorm names: `sa_layer_norm`, `output_layer_norm`
+     fn load_distilbert(st: &SafeTensorsFile, config: &ModelConfig) -> Result<Self> {
+-        let word_embeddings = st.get_tensor("distilbert.embeddings.word_embeddings.weight")
++        let word_embeddings = st
++            .get_tensor("distilbert.embeddings.word_embeddings.weight")
+             .or_else(|_| st.get_tensor("embeddings.word_embeddings.weight"))?;
+-        let position_embeddings = st.get_tensor("distilbert.embeddings.position_embeddings.weight")
++        let position_embeddings = st
++            .get_tensor("distilbert.embeddings.position_embeddings.weight")
+             .or_else(|_| st.get_tensor("embeddings.position_embeddings.weight"))?;
+-        let embedding_ln_weight = st.get_tensor("distilbert.embeddings.LayerNorm.weight")
++        let embedding_ln_weight = st
++            .get_tensor("distilbert.embeddings.LayerNorm.weight")
+             .or_else(|_| st.get_tensor("embeddings.LayerNorm.weight"))?;
+-        let embedding_ln_bias = st.get_tensor("distilbert.embeddings.LayerNorm.bias")
++        let embedding_ln_bias = st
++            .get_tensor("distilbert.embeddings.LayerNorm.bias")
+             .or_else(|_| st.get_tensor("embeddings.LayerNorm.bias"))?;
+ 
+-        Self::validate_shape(&word_embeddings, &[config.vocab_size, config.hidden_size], "word_embeddings")?;
+-        Self::validate_shape(&position_embeddings, &[config.max_position_embeddings, config.hidden_size], "position_embeddings")?;
++        Self::validate_shape(
++            &word_embeddings,
++            &[config.vocab_size, config.hidden_size],
++            "word_embeddings",
++        )?;
++        Self::validate_shape(
++            &position_embeddings,
++            &[config.max_position_embeddings, config.hidden_size],
++            "position_embeddings",
++        )?;
+ 
+         let mut layers = Vec::with_capacity(config.num_hidden_layers);
+         for i in 0..config.num_hidden_layers {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:162:
+         })
+     }
+ 
+-    fn load_bert_layer(st: &SafeTensorsFile, config: &ModelConfig, layer_idx: usize) -> Result<EncoderLayerWeights> {
++    fn load_bert_layer(
++        st: &SafeTensorsFile,
++        config: &ModelConfig,
++        layer_idx: usize,
++    ) -> Result<EncoderLayerWeights> {
+         let h = config.hidden_size;
+         let inter = config.intermediate_size;
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:204:
+         Ok(EncoderLayerWeights { attention, ff })
+     }
+ 
+-    fn load_distilbert_layer(st: &SafeTensorsFile, config: &ModelConfig, layer_idx: usize) -> Result<EncoderLayerWeights> {
++    fn load_distilbert_layer(
++        st: &SafeTensorsFile,
++        config: &ModelConfig,
++        layer_idx: usize,
++    ) -> Result<EncoderLayerWeights> {
+         let h = config.hidden_size;
+         let inter = config.intermediate_size;
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\model\weights.rs:251:
+         if tensor.shape().dims() != expected {
+             return Err(HypEmbedError::Model(format!(
+                 "Shape mismatch for '{}': expected {:?}, got {}",
+-                name, expected, tensor.shape()
++                name,
++                expected,
++                tensor.shape()
+             )));
+         }
+         Ok(())
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\embedder.rs:1:
++use crate::error::Result;
++use crate::model::config::ModelConfig;
++use crate::model::embedding;
++use crate::model::encoder;
++use crate::model::pool::{self, PoolingStrategy};
++use crate::model::weights::ModelWeights;
++use crate::tensor::normalize;
++use crate::tokenizer::Tokenizer;
+ /// The main embedding pipeline.
+ ///
+ /// `Embedder` is the primary user-facing type. It combines tokenization,
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\embedder.rs:17:
+ 
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::path::Path;
+-use crate::error::Result;
+-use crate::tensor::normalize;
+-use crate::tokenizer::Tokenizer;
+-use crate::model::config::ModelConfig;
+-use crate::model::weights::ModelWeights;
+-use crate::model::embedding;
+-use crate::model::encoder;
+-use crate::model::pool::{self, PoolingStrategy};
+ 
+ /// Options controlling pooling, normalization, and sequence length for [`Embedder::embed`].
+ ///
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\embedder.rs:180:
+         let encodings = self.tokenizer.encode_batch(texts, options.max_length)?;
+ 
+         let input_ids: Vec<Vec<u32>> = encodings.iter().map(|e| e.input_ids.clone()).collect();
+-        let attention_mask: Vec<Vec<u32>> = encodings.iter().map(|e| e.attention_mask.clone()).collect();
+-        let token_type_ids: Vec<Vec<u32>> = encodings.iter().map(|e| e.token_type_ids.clone()).collect();
++        let attention_mask: Vec<Vec<u32>> =
++            encodings.iter().map(|e| e.attention_mask.clone()).collect();
++        let token_type_ids: Vec<Vec<u32>> =
++            encodings.iter().map(|e| e.token_type_ids.clone()).collect();
+ 
+         // Step 2: Embeddings
+         let hidden = embedding::compute_embeddings(
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\embedder.rs:196:
+         )?;
+ 
+         // Step 3: Encoder forward
+-        let hidden = encoder::encoder_forward(
+-            hidden,
+-            &attention_mask,
+-            &self.weights.layers,
+-            &self.config,
+-        )?;
++        let hidden =
++            encoder::encoder_forward(hidden, &attention_mask, &self.weights.layers, &self.config)?;
+ 
+         // Step 4: Pooling
+         let pooled = pool::pool(&hidden, &attention_mask, options.pooling)?;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\embedder.rs:305:
+         let out = embedder.embed(&["hello"], &options).unwrap();
+         let norm: f32 = out[0].iter().map(|x| x * x).sum::<f32>().sqrt();
+         assert!(norm > 0.0);
+-        assert!((norm - 1.0).abs() > 1e-3, "CLS without normalize should not be unit length");
++        assert!(
++            (norm - 1.0).abs() > 1e-3,
++            "CLS without normalize should not be unit length"
++        );
+     }
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\pipeline\mod.rs:3:
+ //! Contains the high-level [`Embedder`](embedder::Embedder) coordinator.
+ 
+ pub(crate) mod embedder;
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\activation.rs:9:
+ ///
+ /// This matches the implementation used in BERT, GPT-2, and most HuggingFace models.
+ /// The approximation is accurate to ~1e-4 relative error.
+-
+ use crate::tensor::Tensor;
+ 
+ /// Constant: sqrt(2 / π) ≈ 0.7978845608
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\activation.rs:17:
+ 
+ /// Apply GELU element-wise.
+ pub fn gelu(tensor: &Tensor) -> Tensor {
+-    let data: Vec<f32> = tensor.data().iter().map(|&x| {
+-        let inner = SQRT_2_OVER_PI * (x + 0.044715 * x * x * x);
+-        0.5 * x * (1.0 + inner.tanh())
+-    }).collect();
++    let data: Vec<f32> = tensor
++        .data()
++        .iter()
++        .map(|&x| {
++            let inner = SQRT_2_OVER_PI * (x + 0.044715 * x * x * x);
++            0.5 * x * (1.0 + inner.tanh())
++        })
++        .collect();
+     // Shape unchanged, length unchanged; unwrap is safe
+     Tensor::from_vec(data, tensor.shape().clone()).unwrap()
+ }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:12:
+ /// - `gamma` (scale) and `beta` (bias) are learnable parameters of shape `[hidden_size]`
+ ///
+ /// This is the standard pre-/post-layer normalization used in transformers.
+-
+ use crate::error::{HypEmbedError, Result};
+ use crate::tensor::Tensor;
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:26:
+ pub fn layer_norm(tensor: &Tensor, gamma: &Tensor, beta: &Tensor, eps: f32) -> Result<Tensor> {
+     let dims = tensor.shape().dims();
+     if dims.is_empty() {
+-        return Err(HypEmbedError::Tensor("Cannot apply layer_norm to scalar".into()));
++        return Err(HypEmbedError::Tensor(
++            "Cannot apply layer_norm to scalar".into(),
++        ));
+     }
+     let hidden_size = *dims.last().unwrap();
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:33:
+     if gamma.rank() != 1 || gamma.shape().dim(0)? != hidden_size {
+         return Err(HypEmbedError::Tensor(format!(
+             "gamma shape mismatch: expected [{}], got {}",
+-            hidden_size, gamma.shape()
++            hidden_size,
++            gamma.shape()
+         )));
+     }
+     if beta.rank() != 1 || beta.shape().dim(0)? != hidden_size {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:40:
+         return Err(HypEmbedError::Tensor(format!(
+             "beta shape mismatch: expected [{}], got {}",
+-            hidden_size, beta.shape()
++            hidden_size,
++            beta.shape()
+         )));
+     }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:59:
+ 
+         // Compute variance: E[(x - mean)²]
+         // Use two-pass for better numerical stability
+-        let var: f32 = row_data.iter().map(|&x| {
+-            let diff = x - mean;
+-            diff * diff
+-        }).sum::<f32>() / hidden_size as f32;
++        let var: f32 = row_data
++            .iter()
++            .map(|&x| {
++                let diff = x - mean;
++                diff * diff
++            })
++            .sum::<f32>()
++            / hidden_size as f32;
+ 
+         // Normalization factor: 1 / sqrt(var + eps)
+         let inv_std = 1.0 / (var + eps).sqrt();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:92:
+ 
+         // Mean should be ~0 after normalization
+         let mean: f32 = data.iter().sum::<f32>() / 3.0;
+-        assert!(mean.abs() < 1e-5, "Mean after LN should be ~0, got {}", mean);
++        assert!(
++            mean.abs() < 1e-5,
++            "Mean after LN should be ~0, got {}",
++            mean
++        );
+ 
+         // Variance should be ~1
+         let var: f32 = data.iter().map(|&x| (x - mean) * (x - mean)).sum::<f32>() / 3.0;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:99:
+-        assert!((var - 1.0).abs() < 1e-4, "Var after LN should be ~1, got {}", var);
++        assert!(
++            (var - 1.0).abs() < 1e-4,
++            "Var after LN should be ~1, got {}",
++            var
++        );
+     }
+ 
+     #[test]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\layernorm.rs:119:
+         let t = Tensor::from_vec(
+             vec![1.0, 2.0, 3.0, 10.0, 20.0, 30.0],
+             Shape::new(vec![2, 3]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let gamma = Tensor::ones(Shape::new(vec![3]));
+         let beta = Tensor::zeros(Shape::new(vec![3]));
+         let result = layer_norm(&t, &gamma, &beta, 1e-12).unwrap();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:1:
+ /// Matrix multiplication operations.
+ ///
+ /// Implements 2D matmul and batched matmul needed for transformer inference.
+-
+ use crate::error::{HypEmbedError, Result};
+-use crate::tensor::{Shape, Tensor};
+ use crate::tensor::simd;
++use crate::tensor::{Shape, Tensor};
+ 
+ /// 2D matrix multiplication: `C = A @ B`
+ ///
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:18:
+     if a.rank() != 2 || b.rank() != 2 {
+         return Err(HypEmbedError::Tensor(format!(
+             "matmul requires 2D tensors, got shapes {} and {}",
+-            a.shape(), b.shape()
++            a.shape(),
++            b.shape()
+         )));
+     }
+     let m = a.shape().dim(0)?;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:64:
+     if a.rank() != 3 || b.rank() != 3 {
+         return Err(HypEmbedError::Tensor(format!(
+             "batched_matmul requires 3D tensors, got shapes {} and {}",
+-            a.shape(), b.shape()
++            a.shape(),
++            b.shape()
+         )));
+     }
+     let batch_a = a.shape().dim(0)?;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:145:
+     #[test]
+     fn test_matmul_rect() {
+         // [2, 3] @ [3, 1]
+-        let a = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
++        let a =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let b = Tensor::from_vec(vec![1.0, 0.0, 1.0], Shape::new(vec![3, 1])).unwrap();
+         let c = matmul(&a, &b).unwrap();
+         assert_eq!(c.shape().dims(), &[2, 1]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:168:
+                 2.0, 0.0, 0.0, 2.0, // batch 1: 2*identity
+             ],
+             Shape::new(vec![2, 2, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let b = Tensor::from_vec(
+             vec![
+                 3.0, 4.0, 5.0, 6.0, // batch 0
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\matmul.rs:175:
+                 3.0, 4.0, 5.0, 6.0, // batch 1
+             ],
+             Shape::new(vec![2, 2, 2]),
+-        ).unwrap();
++        )
++        .unwrap();
+         let c = batched_matmul(&a, &b).unwrap();
+         assert_eq!(c.shape().dims(), &[2, 2, 2]);
+         // batch 0: identity * B = B
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\mod.rs:2:
+ ///
+ /// The tensor uses row-major (C-order) contiguous storage.
+ /// All data is stored as a flat `Vec<f32>` with a `Shape` describing the layout.
+-
+ pub(crate) mod activation;
+ pub(crate) mod layernorm;
+ pub(crate) mod matmul;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\mod.rs:216:
+ 
+     #[test]
+     fn test_from_vec() {
+-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         assert_eq!(t.rank(), 2);
+         assert_eq!(t.numel(), 6);
+         assert_eq!(t.get(&[0, 0]).unwrap(), 1.0);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\mod.rs:239:
+ 
+     #[test]
+     fn test_transpose_2d() {
+-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let tt = t.transpose_2d().unwrap();
+         assert_eq!(tt.shape().dims(), &[3, 2]);
+         assert_eq!(tt.get(&[0, 0]).unwrap(), 1.0);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\mod.rs:250:
+ 
+     #[test]
+     fn test_reshape() {
+-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let r = t.reshape(Shape::new(vec![3, 2])).unwrap();
+         assert_eq!(r.shape().dims(), &[3, 2]);
+         assert_eq!(r.get(&[0, 0]).unwrap(), 1.0);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\mod.rs:259:
+ 
+     #[test]
+     fn test_slice_first() {
+-        let t = Tensor::from_vec(
+-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+-            Shape::new(vec![2, 3]),
+-        ).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let s0 = t.slice_first(0).unwrap();
+         assert_eq!(s0.shape().dims(), &[3]);
+         assert_eq!(s0.data(), &[1.0, 2.0, 3.0]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\normalize.rs:10:
+ ///
+ /// Using `max(norm, epsilon)` prevents division by zero for zero vectors.
+ /// The output vectors have unit L2 norm (or near-unit for near-zero inputs).
+-
+ use crate::error::{HypEmbedError, Result};
+ use crate::tensor::Tensor;
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\normalize.rs:27:
+     }
+     let last_dim = *dims.last().unwrap();
+     if last_dim == 0 {
+-        return Err(HypEmbedError::Tensor("Cannot L2-normalize a zero-length dimension".into()));
++        return Err(HypEmbedError::Tensor(
++            "Cannot L2-normalize a zero-length dimension".into(),
++        ));
+     }
+ 
+     let data = tensor.data();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\normalize.rs:82:
+ 
+     #[test]
+     fn test_l2_normalize_2d() {
+-        let t = Tensor::from_vec(
+-            vec![3.0, 4.0, 0.0, 5.0],
+-            Shape::new(vec![2, 2]),
+-        ).unwrap();
++        let t = Tensor::from_vec(vec![3.0, 4.0, 0.0, 5.0], Shape::new(vec![2, 2])).unwrap();
+         let n = l2_normalize(&t, 1e-12).unwrap();
+         let data = n.data();
+         // Row 0: [3/5, 4/5]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:1:
+ /// Tensor arithmetic operations.
+ ///
+ /// All operations are dimension-checked and return new tensors (functional style).
+-
+ use crate::error::{HypEmbedError, Result};
+-use crate::tensor::{Tensor, Shape};
+ use crate::tensor::simd;
++use crate::tensor::{Shape, Tensor};
+ 
+ /// Element-wise addition of two tensors with the same shape.
+ pub fn add(a: &Tensor, b: &Tensor) -> Result<Tensor> {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:11:
+     if a.shape() != b.shape() {
+         return Err(HypEmbedError::Tensor(format!(
+             "Shape mismatch in add: {} vs {}",
+-            a.shape(), b.shape()
++            a.shape(),
++            b.shape()
+         )));
+     }
+     let mut data = vec![0.0f32; a.numel()];
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:32:
+     }
+     let t_dims = tensor.shape().dims();
+     let bias_len = bias.shape().dim(0)?;
+-    let last_dim = *t_dims.last().ok_or_else(|| {
+-        HypEmbedError::Tensor("Cannot add bias to scalar tensor".into())
+-    })?;
++    let last_dim = *t_dims
++        .last()
++        .ok_or_else(|| HypEmbedError::Tensor("Cannot add bias to scalar tensor".into()))?;
+     if last_dim != bias_len {
+         return Err(HypEmbedError::Tensor(format!(
+             "Bias length {} does not match last dim {} of tensor shape {}",
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:41:
+-            bias_len, last_dim, tensor.shape()
++            bias_len,
++            last_dim,
++            tensor.shape()
+         )));
+     }
+     let bias_data = bias.data();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:56:
+     if a.shape() != b.shape() {
+         return Err(HypEmbedError::Tensor(format!(
+             "Shape mismatch in mul: {} vs {}",
+-            a.shape(), b.shape()
++            a.shape(),
++            b.shape()
+         )));
+     }
+     let mut data = vec![0.0f32; a.numel()];
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:93:
+     if b_dims.len() > rank {
+         return Err(HypEmbedError::Tensor(format!(
+             "Cannot broadcast {} onto {}",
+-            b.shape(), a.shape()
++            b.shape(),
++            a.shape()
+         )));
+     }
+     let offset = rank - b_dims.len();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:150:
+     if t_dims.len() != m_dims.len() {
+         return Err(HypEmbedError::Tensor(format!(
+             "Rank mismatch in mul_broadcast_last: {} vs {}",
+-            tensor.shape(), mask.shape()
++            tensor.shape(),
++            mask.shape()
+         )));
+     }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:201:
+     if axis >= dims.len() {
+         return Err(HypEmbedError::Tensor(format!(
+             "Axis {} out of range for shape {}",
+-            axis, tensor.shape()
++            axis,
++            tensor.shape()
+         )));
+     }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:247:
+ 
+     #[test]
+     fn test_add_bias() {
+-        let t = Tensor::from_vec(
+-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+-            Shape::new(vec![2, 3]),
+-        ).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let bias = Tensor::from_vec(vec![0.1, 0.2, 0.3], Shape::new(vec![3])).unwrap();
+         let result = add_bias(&t, &bias).unwrap();
+         let expected = [1.1, 2.2, 3.3, 4.1, 5.2, 6.3];
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\ops.rs:276:
+ 
+     #[test]
+     fn test_sum_along_axis() {
+-        let t = Tensor::from_vec(
+-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+-            Shape::new(vec![2, 3]),
+-        ).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+         let s = sum_along_axis(&t, 0).unwrap();
+         assert_eq!(s.shape().dims(), &[3]);
+         assert_eq!(s.data(), &[5.0, 7.0, 9.0]);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\shape.rs:7:
+ /// - dim 2 has size 4
+ ///
+ /// Total element count = 2 * 3 * 4 = 24.
+-
+ use crate::error::{HypEmbedError, Result};
+ 
+ /// A tensor shape with dimension sizes.
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\shape.rs:111:
+ 
+ impl std::fmt::Display for Shape {
+     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        write!(f, "[{}]", self.dims.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", "))
++        write!(
++            f,
++            "[{}]",
++            self.dims
++                .iter()
++                .map(|d| d.to_string())
++                .collect::<Vec<_>>()
++                .join(", ")
++        )
+     }
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\simd.rs:293:
+     fn test_add_assign_scaled() {
+         let mut dst = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+         let src = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];
+-        let expected: Vec<f32> = dst.iter().zip(src.iter()).map(|(&d, &s)| d + s * 0.5).collect();
++        let expected: Vec<f32> = dst
++            .iter()
++            .zip(src.iter())
++            .map(|(&d, &s)| d + s * 0.5)
++            .collect();
+         add_assign_scaled(&mut dst, &src, 0.5);
+         for (a, b) in dst.iter().zip(expected.iter()) {
+             assert!((a - b).abs() < 1e-5, "{} != {}", a, b);
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\simd.rs:306:
+         let b = vec![9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0];
+         let expected: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
+         let result = dot_product(&a, &b);
+-        assert!((result - expected).abs() < 1e-4, "{} != {}", result, expected);
++        assert!(
++            (result - expected).abs() < 1e-4,
++            "{} != {}",
++            result,
++            expected
++        );
+     }
+ 
+     #[test]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\simd.rs:313:
+     fn test_elementwise_add() {
+         let a = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0];
+-        let b = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0];
++        let b = vec![
++            10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0,
++        ];
+         let mut out = vec![0.0; a.len()];
+         elementwise_add(&a, &b, &mut out);
+         for i in 0..a.len() {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\simd.rs:333:
+ 
+     #[test]
+     fn test_scalar_mul_slice() {
+-        let src = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0];
++        let src = vec![
++            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
++        ];
+         let mut out = vec![0.0; src.len()];
+         scalar_mul_slice(&src, 3.0, &mut out);
+         for i in 0..src.len() {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\softmax.rs:9:
+ /// Subtracting the maximum prevents overflow in `exp()` and avoids
+ /// underflow of the denominator. This is the standard stable softmax
+ /// approach used in all production ML systems.
+-
+ use crate::error::{HypEmbedError, Result};
+ use crate::tensor::Tensor;
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\softmax.rs:20:
+ pub fn softmax(tensor: &Tensor) -> Result<Tensor> {
+     let dims = tensor.shape().dims();
+     if dims.is_empty() {
+-        return Err(HypEmbedError::Tensor("Cannot apply softmax to scalar".into()));
++        return Err(HypEmbedError::Tensor(
++            "Cannot apply softmax to scalar".into(),
++        ));
+     }
+     let last_dim = *dims.last().unwrap();
+     if last_dim == 0 {
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\softmax.rs:27:
+-        return Err(HypEmbedError::Tensor("Cannot apply softmax to zero-length dimension".into()));
++        return Err(HypEmbedError::Tensor(
++            "Cannot apply softmax to zero-length dimension".into(),
++        ));
+     }
+ 
+     let data = tensor.data();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tensor\softmax.rs:115:
+     #[test]
+     fn test_softmax_2d() {
+         // Softmax along last dim for 2D tensor
+-        let t = Tensor::from_vec(
+-            vec![1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
+-            Shape::new(vec![2, 3]),
+-        ).unwrap();
++        let t =
++            Tensor::from_vec(vec![1.0, 2.0, 3.0, 1.0, 2.0, 3.0], Shape::new(vec![2, 3])).unwrap();
+         let s = softmax(&t).unwrap();
+         // Each row should sum to 1
+         let sum_row0: f32 = s.data()[0..3].iter().sum();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\encode.rs:1:
++use crate::error::{HypEmbedError, Result};
++use crate::tokenizer::pre_tokenize;
++use crate::tokenizer::vocab::Vocab;
++use crate::tokenizer::wordpiece;
++#[cfg(not(target_arch = "wasm32"))]
++use rayon::prelude::*;
+ /// Encoding: the final tokenizer output.
+ ///
+ /// Combines pre-tokenization, WordPiece, and special token handling
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\encode.rs:5:
+ 
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::path::Path;
+-use crate::error::{HypEmbedError, Result};
+-use crate::tokenizer::pre_tokenize;
+-use crate::tokenizer::vocab::Vocab;
+-use crate::tokenizer::wordpiece;
+-#[cfg(not(target_arch = "wasm32"))]
+-use rayon::prelude::*;
+ 
+ /// The output of tokenizing a single text.
+ #[derive(Debug, Clone)]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\encode.rs:150:
+ 
+     fn make_test_tokenizer() -> Tokenizer {
+         let tokens = vec![
+-            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]",
+-            "hello", "world", "un", "##aff", "##able",
+-            "rust", "##ing", "##s", "the", "a",
+-            ",", ".", "!", "?",
++            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "hello", "world", "un", "##aff",
++            "##able", "rust", "##ing", "##s", "the", "a", ",", ".", "!", "?",
+         ];
+         let vocab = Vocab::parse(&tokens.join("\n")).unwrap();
+         Tokenizer::from_vocab(vocab, true)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\mod.rs:11:
+ pub(crate) mod wordpiece;
+ 
+ pub(crate) use encode::{Encoding, Tokenizer};
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:9:
+ /// 6. Split on punctuation (each punctuation character becomes its own token)
+ ///
+ /// This matches the behavior of `BasicTokenizer` in the HuggingFace tokenizers library.
+-
+ use unicode_normalization::UnicodeNormalization;
+ 
+ /// Pre-tokenize a text string into word-level tokens.
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:94:
+         return true;
+     }
+     // Unicode category Zs (space separator)
+-    matches!(ch,
+-        '\u{00A0}' | '\u{1680}' | '\u{2000}'..='\u{200A}' |
+-        '\u{202F}' | '\u{205F}' | '\u{3000}'
++    matches!(
++        ch,
++        '\u{00A0}' | '\u{1680}' | '\u{2000}'..='\u{200A}' | '\u{202F}' | '\u{205F}' | '\u{3000}'
+     )
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:115:
+         return true;
+     }
+     // Zero-width characters
+-    matches!(ch,
+-        '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{FEFF}'
+-    )
++    matches!(ch, '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{FEFF}')
+ }
+ 
+ /// Check if a character is punctuation.
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:129:
+     if (33..=47).contains(&cp)      // ! " # $ % & ' ( ) * + , - . /
+         || (58..=64).contains(&cp)  // : ; < = > ? @
+         || (91..=96).contains(&cp)  // [ \ ] ^ _ `
+-        || (123..=126).contains(&cp) // { | } ~
++        || (123..=126).contains(&cp)
++    // { | } ~
+     {
+         return true;
+     }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:141:
+     // Check Unicode general categories for punctuation
+     // Covers Pc, Pd, Pe, Pf, Pi, Po, Ps
+     let cat = unicode_general_category(ch);
+-    matches!(cat,
+-        GeneralCategory::Pc | GeneralCategory::Pd | GeneralCategory::Pe |
+-        GeneralCategory::Pf | GeneralCategory::Pi | GeneralCategory::Po |
+-        GeneralCategory::Ps
++    matches!(
++        cat,
++        GeneralCategory::Pc
++            | GeneralCategory::Pd
++            | GeneralCategory::Pe
++            | GeneralCategory::Pf
++            | GeneralCategory::Pi
++            | GeneralCategory::Po
++            | GeneralCategory::Ps
+     )
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:153:
+ /// Decomposes characters into base + combining marks, then removes
+ /// all combining marks (Unicode category Mn/Mc/Me).
+ fn strip_accents(text: &str) -> String {
+-    text.nfd()
+-        .filter(|ch| !is_combining_mark(*ch))
+-        .collect()
++    text.nfd().filter(|ch| !is_combining_mark(*ch)).collect()
+ }
+ 
+ /// Check if a character is a Unicode combining mark.
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:210:
+ fn is_chinese_char(ch: char) -> bool {
+     let cp = ch as u32;
+     // CJK Unified Ideographs: U+4E00–U+9FFF
+-    if (0x4E00..=0x9FFF).contains(&cp) { return true; }
++    if (0x4E00..=0x9FFF).contains(&cp) {
++        return true;
++    }
+     // CJK Extension A: U+3400–U+4DBF
+-    if (0x3400..=0x4DBF).contains(&cp) { return true; }
++    if (0x3400..=0x4DBF).contains(&cp) {
++        return true;
++    }
+     // CJK Extension B: U+20000–U+2A6DF
+-    if (0x20000..=0x2A6DF).contains(&cp) { return true; }
++    if (0x20000..=0x2A6DF).contains(&cp) {
++        return true;
++    }
+     // CJK Extension C: U+2A700–U+2B73F
+-    if (0x2A700..=0x2B73F).contains(&cp) { return true; }
++    if (0x2A700..=0x2B73F).contains(&cp) {
++        return true;
++    }
+     // CJK Extension D: U+2B740–U+2B81F
+-    if (0x2B740..=0x2B81F).contains(&cp) { return true; }
++    if (0x2B740..=0x2B81F).contains(&cp) {
++        return true;
++    }
+     // CJK Extension E: U+2B820–U+2CEAF
+-    if (0x2B820..=0x2CEAF).contains(&cp) { return true; }
++    if (0x2B820..=0x2CEAF).contains(&cp) {
++        return true;
++    }
+     // CJK Compatibility Ideographs: U+F900–U+FAFF
+-    if (0xF900..=0xFAFF).contains(&cp) { return true; }
++    if (0xF900..=0xFAFF).contains(&cp) {
++        return true;
++    }
+     // CJK Compatibility Ideographs Supplement: U+2F800–U+2FA1F
+-    if (0x2F800..=0x2FA1F).contains(&cp) { return true; }
++    if (0x2F800..=0x2FA1F).contains(&cp) {
++        return true;
++    }
+     false
+ }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\pre_tokenize.rs:261:
+         0x203A => GeneralCategory::Pf, // Single right-pointing angle quotation mark
+         // CJK punctuation
+         0x3001 | 0x3002 => GeneralCategory::Po, // 、。
+-        0x3008 | 0x300A | 0x300C | 0x300E | 0x3010 | 0x3014 | 0x3016 | 0x3018 | 0x301A => GeneralCategory::Ps,
+-        0x3009 | 0x300B | 0x300D | 0x300F | 0x3011 | 0x3015 | 0x3017 | 0x3019 | 0x301B => GeneralCategory::Pe,
++        0x3008 | 0x300A | 0x300C | 0x300E | 0x3010 | 0x3014 | 0x3016 | 0x3018 | 0x301A => {
++            GeneralCategory::Ps
++        }
++        0x3009 | 0x300B | 0x300D | 0x300F | 0x3011 | 0x3015 | 0x3017 | 0x3019 | 0x301B => {
++            GeneralCategory::Pe
++        }
+         // Fullwidth forms — specific bracket forms before range
+-        0xFF08 => GeneralCategory::Ps, // （
+-        0xFF09 => GeneralCategory::Pe, // ）
+-        0xFF3B => GeneralCategory::Ps, // ［
+-        0xFF3D => GeneralCategory::Pe, // ］
+-        0xFF5B => GeneralCategory::Ps, // ｛
+-        0xFF5D => GeneralCategory::Pe, // ｝
++        0xFF08 => GeneralCategory::Ps,                            // （
++        0xFF09 => GeneralCategory::Pe,                            // ）
++        0xFF3B => GeneralCategory::Ps,                            // ［
++        0xFF3D => GeneralCategory::Pe,                            // ］
++        0xFF5B => GeneralCategory::Ps,                            // ｛
++        0xFF5D => GeneralCategory::Pe,                            // ｝
+         0xFF01..=0xFF07 | 0xFF0A..=0xFF0F => GeneralCategory::Po, // ！-／ (excluding brackets)
+-        0xFF1A..=0xFF1B => GeneralCategory::Po, // ：；
+-        0xFF1F | 0xFF20 => GeneralCategory::Po, // ？＠
++        0xFF1A..=0xFF1B => GeneralCategory::Po,                   // ：；
++        0xFF1F | 0xFF20 => GeneralCategory::Po,                   // ？＠
+         _ => GeneralCategory::Other,
+     }
+ }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\vocab.rs:1:
++use crate::error::{HypEmbedError, Result};
+ /// Vocabulary for BERT-style models.
+ ///
+ /// Loads a `vocab.txt` file where each line is a token, and the line number
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\vocab.rs:4:
+ /// (0-indexed) is the token's ID. This is the standard format used by
+ /// BERT, DistilBERT, MiniLM, etc.
+-
+ use std::collections::HashMap;
+ #[cfg(not(target_arch = "wasm32"))]
+ use std::path::Path;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\vocab.rs:10:
+-use crate::error::{HypEmbedError, Result};
+ 
+ /// Special token constants.
+ pub const CLS_TOKEN: &str = "[CLS]";
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\wordpiece.rs:12:
+ /// 3. If no match is found for any prefix, the entire word maps to `[UNK]`
+ ///
+ /// This matches the original BERT WordPiece implementation.
+-
+ use crate::tokenizer::vocab::Vocab;
+ 
+ /// Maximum subword length to consider (prevents pathological cases).
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\src\tokenizer\wordpiece.rs:74:
+     /// Create a small test vocabulary.
+     fn make_test_vocab() -> Vocab {
+         let tokens = vec![
+-            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]",
+-            "hello", "world", "un", "##aff", "##able",
+-            "rust", "##ing", "##s", "the", "a",
++            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "hello", "world", "un", "##aff",
++            "##able", "rust", "##ing", "##s", "the", "a",
+         ];
+         Vocab::parse(&tokens.join("\n")).unwrap()
+     }
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\bunny_edge_test.rs:36:
+         meta.len()
+     );
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\byte_load_test.rs:6:
+ fn embed_from_bytes_produces_expected_dimension() {
+     let weights = common::tiny_safetensors_bytes();
+     let vocab = common::tiny_vocab_txt();
+-    let embedder = Embedder::from_bytes(
+-        common::TINY_CONFIG_JSON,
+-        &vocab,
+-        &weights,
+-        true,
+-    )
+-    .expect("load tiny model from bytes");
++    let embedder = Embedder::from_bytes(common::TINY_CONFIG_JSON, &vocab, &weights, true)
++        .expect("load tiny model from bytes");
+ 
+     assert_eq!(embedder.hidden_size(), 8);
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\byte_load_test.rs:29:
+     assert_eq!(embeddings[0].len(), 8);
+ 
+     let norm: f32 = embeddings[0].iter().map(|x| x * x).sum::<f32>().sqrt();
+-    assert!((norm - 1.0).abs() < 1e-4, "expected L2-normalized vector, got norm {norm}");
++    assert!(
++        (norm - 1.0).abs() < 1e-4,
++        "expected L2-normalized vector, got norm {norm}"
++    );
+ }
+ 
+ #[test]
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\byte_load_test.rs:36:
+ fn embed_from_bytes_is_deterministic() {
+     let weights = common::tiny_safetensors_bytes();
+     let vocab = common::tiny_vocab_txt();
+-    let embedder = Embedder::from_bytes(
+-        common::TINY_CONFIG_JSON,
+-        &vocab,
+-        &weights,
+-        true,
+-    )
+-    .unwrap();
++    let embedder = Embedder::from_bytes(common::TINY_CONFIG_JSON, &vocab, &weights, true).unwrap();
+ 
+     let options = EmbeddingOptions::default().with_max_length(16);
+     let a = embedder.embed(&["semantic search"], &options).unwrap();
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\byte_load_test.rs:49:
+     let b = embedder.embed(&["semantic search"], &options).unwrap();
+     assert_eq!(a, b);
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\common\mod.rs:68:
+         "embeddings.word_embeddings.weight".to_string(),
+         (vec![20, 8], word_vals),
+     );
+-    add(&mut tensors, "embeddings.position_embeddings.weight", &[32, 8], 0.01);
+-    add(&mut tensors, "embeddings.token_type_embeddings.weight", &[2, 8], 0.01);
++    add(
++        &mut tensors,
++        "embeddings.position_embeddings.weight",
++        &[32, 8],
++        0.01,
++    );
++    add(
++        &mut tensors,
++        "embeddings.token_type_embeddings.weight",
++        &[2, 8],
++        0.01,
++    );
+     add(&mut tensors, "embeddings.LayerNorm.weight", &[8], 1.0);
+     add(&mut tensors, "embeddings.LayerNorm.bias", &[8], 0.0);
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\common\mod.rs:80:
+         "attention.self.value.weight",
+         "attention.output.dense.weight",
+     ] {
+-        add(
+-            &mut tensors,
+-            &format!("{layer}.{name}"),
+-            &[8, 8],
+-            0.01,
+-        );
++        add(&mut tensors, &format!("{layer}.{name}"), &[8, 8], 0.01);
+     }
+     for name in [
+         "attention.self.query.bias",
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\common\mod.rs:180:
+     std::fs::write(dir.join("vocab.txt"), tiny_vocab_txt()).expect("write vocab");
+     std::fs::write(dir.join("model.safetensors"), tiny_safetensors_bytes()).expect("write weights");
+ }
++
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\golden_test.rs:33:
+     );
+ 
+     // Load model
+-    let embedder = hypembed::Embedder::load(&model_dir)
+-        .expect("Failed to load model");
++    let embedder = hypembed::Embedder::load(&model_dir).expect("Failed to load model");
+ 
+     // Load golden reference
+-    let golden_json = std::fs::read_to_string(&golden_path)
+-        .expect("Failed to read golden file");
+-    let golden: HashMap<String, Vec<Vec<f64>>> = serde_json::from_str(&golden_json)
+-        .expect("Failed to parse golden JSON");
++    let golden_json = std::fs::read_to_string(&golden_path).expect("Failed to read golden file");
++    let golden: HashMap<String, Vec<Vec<f64>>> =
++        serde_json::from_str(&golden_json).expect("Failed to parse golden JSON");
+ 
+     let options = hypembed::EmbeddingOptions::default()
+         .with_normalize(true)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\golden_test.rs:65:
+             sentence
+         );
+ 
+-        for (i, (&actual, &expected)) in result[0].iter().zip(expected_embeddings[0].iter()).enumerate() {
++        for (i, (&actual, &expected)) in result[0]
++            .iter()
++            .zip(expected_embeddings[0].iter())
++            .enumerate()
++        {
+             let diff = (actual as f64 - expected).abs();
+             max_diff = max_diff.max(diff);
+             assert!(
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\golden_test.rs:72:
+                 diff < tolerance,
+                 "Element {} mismatch for '{}': actual={}, expected={}, diff={}",
+-                i, sentence, actual, expected, diff
++                i,
++                sentence,
++                actual,
++                expected,
++                diff
+             );
+         }
+         total_tested += 1;
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\golden_test.rs:91:
+         .unwrap_or_else(|_| "tests/fixtures/model".to_string());
+ 
+     if !std::path::Path::new(&model_dir).exists() {
+-        eprintln!("Skipping determinism test: model not found at {}", model_dir);
++        eprintln!(
++            "Skipping determinism test: model not found at {}",
++            model_dir
++        );
+         return;
+     }
+ 
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\golden_test.rs:98:
+-    let embedder = hypembed::Embedder::load(&model_dir)
+-        .expect("Failed to load model");
++    let embedder = hypembed::Embedder::load(&model_dir).expect("Failed to load model");
+ 
+     let options = hypembed::EmbeddingOptions::default()
+         .with_normalize(true)
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\repo_scope_test.rs:29:
+ 
+ #[test]
+ fn repo_scope_gitignore_excludes_mcps() {
+-    let gitignore = std::fs::read_to_string(repo_root().join(".gitignore"))
+-        .expect("read .gitignore");
++    let gitignore =
++        std::fs::read_to_string(repo_root().join(".gitignore")).expect("read .gitignore");
+ 
+     assert!(
+         gitignore.lines().any(|line| line.trim() == "/mcps/"),
+Diff in \\?\C:\Users\tunay\Documents\GitHub\hypembed\tests\repo_scope_test.rs:56:
+     let _ = std::any::type_name::<PoolingStrategy>();
+     let _ = std::any::type_name::<HypEmbedError>();
+ }
++
+FMT=1

@@ -29,8 +29,7 @@ pub fn search_chunks(
     top_k: usize,
 ) -> Result<Vec<SearchHit>> {
     let max_length = embedder
-        .config()
-        .max_position_embeddings
+        .max_position_embeddings()
         .min(EmbeddingOptions::default().max_length);
     let options = EmbeddingOptions::default().with_max_length(max_length);
     let query_emb = embedder.embed(&[query], &options)?[0].clone();

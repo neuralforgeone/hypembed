@@ -31,8 +31,7 @@ impl WasmEmbedder {
     pub fn embed(&self, text: &str) -> Result<Vec<f32>, JsValue> {
         let max_length = self
             .inner
-            .config()
-            .max_position_embeddings
+            .max_position_embeddings()
             .min(EmbeddingOptions::default().max_length);
         let options = EmbeddingOptions::default()
             .with_max_length(max_length)

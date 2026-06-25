@@ -43,8 +43,7 @@ pub fn index_directory(
     files.sort();
     let mut indexed = 0usize;
     let max_length = embedder
-        .config()
-        .max_position_embeddings
+        .max_position_embeddings()
         .min(hypembed::EmbeddingOptions::default().max_length);
     let options = hypembed::EmbeddingOptions::default().with_max_length(max_length);
 

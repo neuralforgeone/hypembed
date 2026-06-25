@@ -61,8 +61,9 @@ impl Tokenizer {
     /// - `max_length`: Maximum sequence length (including special tokens)
     pub fn encode(&self, text: &str, max_length: usize) -> Result<Encoding> {
         if max_length < 2 {
-            return Err(HypEmbedError::Tokenizer(
-                "max_length must be at least 2 (for [CLS] and [SEP])".into(),
+            return Err(HypEmbedError::tokenization(
+                "encode",
+                "max_length must be at least 2 (for [CLS] and [SEP])",
             ));
         }
 

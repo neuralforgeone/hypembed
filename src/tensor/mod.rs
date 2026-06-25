@@ -2,22 +2,14 @@
 ///
 /// The tensor uses row-major (C-order) contiguous storage.
 /// All data is stored as a flat `Vec<f32>` with a `Shape` describing the layout.
-#[doc(hidden)]
-pub mod activation;
-#[doc(hidden)]
-pub mod layernorm;
-#[doc(hidden)]
-pub mod matmul;
-#[doc(hidden)]
-pub mod normalize;
-#[doc(hidden)]
-pub mod ops;
-#[doc(hidden)]
-pub mod shape;
-#[doc(hidden)]
-pub mod simd;
-#[doc(hidden)]
-pub mod softmax;
+pub(crate) mod activation;
+pub(crate) mod layernorm;
+pub(crate) mod matmul;
+pub(crate) mod normalize;
+pub(crate) mod ops;
+pub(crate) mod shape;
+pub(crate) mod simd;
+pub(crate) mod softmax;
 
 use crate::error::{HypEmbedError, Result};
 pub use shape::Shape;
