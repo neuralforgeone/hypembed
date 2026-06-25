@@ -48,9 +48,7 @@ impl ChunkStore {
     }
 
     pub fn model_dir(&self) -> Result<Option<String>> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT value FROM meta WHERE key = ?1")?;
+        let mut stmt = self.conn.prepare("SELECT value FROM meta WHERE key = ?1")?;
         let mut rows = stmt.query(params![CONFIG_KEY])?;
         if let Some(row) = rows.next()? {
             Ok(Some(row.get(0)?))
@@ -80,9 +78,9 @@ impl ChunkStore {
     }
 
     pub fn all_chunks(&self) -> Result<Vec<StoredChunk>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT path, chunk_index, text, embedding FROM chunks ORDER BY id",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT path, chunk_index, text, embedding FROM chunks ORDER BY id")?;
         let rows = stmt.query_map([], |row| {
             let path: String = row.get(0)?;
             let chunk_index: i64 = row.get(1)?;
@@ -95,9 +93,7 @@ impl ChunkStore {
         for row in rows {
             let (path, chunk_index, text, blob) = row?;
             if blob.len() % 4 != 0 {
-                return Err(HypeRagError::Other(
-                    "invalid embedding blob length".into(),
-                ));
+                return Err(HypeRagError::Other("invalid embedding blob length".into()));
             }
             let embedding: Vec<f32> = blob
                 .chunks_exact(4)

@@ -12,14 +12,22 @@
 /// ## CLS Pooling
 ///
 /// Simply takes the hidden state at position 0 (the `[CLS]` token).
-
 use crate::error::Result;
-use crate::tensor::{Tensor, Shape};
+use crate::tensor::{Shape, Tensor};
 
 /// Pooling strategy for combining token embeddings into a sentence embedding.
+///
+/// # Examples
+///
+/// ```
+/// use hypembed::PoolingStrategy;
+///
+/// let strategy = PoolingStrategy::Mean;
+/// assert_eq!(strategy, PoolingStrategy::Mean);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PoolingStrategy {
-    /// Mean pooling over non-padding tokens.
+    /// Mean pooling over non-padding tokens (recommended for sentence embeddings).
     Mean,
     /// Use the `[CLS]` token (position 0) embedding.
     Cls,
@@ -113,7 +121,8 @@ mod tests {
         let hidden = Tensor::from_vec(
             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
             Shape::new(vec![1, 3, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let mask = vec![vec![1u32, 1, 1]];
         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
         assert_eq!(pooled.shape().dims(), &[1, 2]);
@@ -128,7 +137,8 @@ mod tests {
         let hidden = Tensor::from_vec(
             vec![1.0, 2.0, 3.0, 4.0, 100.0, 200.0], // last token should be ignored
             Shape::new(vec![1, 3, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let mask = vec![vec![1u32, 1, 0]]; // only first 2 real
         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
         // mean of [1,3] = 2.0, mean of [2,4] = 3.0
@@ -141,7 +151,8 @@ mod tests {
         let hidden = Tensor::from_vec(
             vec![10.0, 20.0, 1.0, 2.0, 3.0, 4.0],
             Shape::new(vec![1, 3, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let mask = vec![vec![1u32, 1, 1]];
         let pooled = pool(&hidden, &mask, PoolingStrategy::Cls).unwrap();
         assert_eq!(pooled.data(), &[10.0, 20.0]); // position 0
@@ -155,7 +166,8 @@ mod tests {
                 5.0, 6.0, 7.0, 8.0, // batch 1, seq 0, seq 1
             ],
             Shape::new(vec![2, 2, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let mask = vec![vec![1u32, 1], vec![1, 0]];
         let pooled = pool(&hidden, &mask, PoolingStrategy::Mean).unwrap();
         assert_eq!(pooled.shape().dims(), &[2, 2]);

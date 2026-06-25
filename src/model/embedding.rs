@@ -4,10 +4,9 @@
 /// ```text
 /// output = LayerNorm(word_embed + position_embed + token_type_embed)
 /// ```
-
 use crate::error::Result;
-use crate::tensor::{Tensor, Shape};
 use crate::tensor::layernorm;
+use crate::tensor::{Shape, Tensor};
 
 /// Compute embeddings for a batch of token sequences.
 ///
@@ -51,9 +50,7 @@ pub fn compute_embeddings(
             let pos_offset = s * hidden_size;
 
             for h in 0..hidden_size {
-                output[out_offset + h] =
-                    word_data[word_offset + h]
-                    + pos_data[pos_offset + h];
+                output[out_offset + h] = word_data[word_offset + h] + pos_data[pos_offset + h];
             }
 
             // + token_type_embed[type_id] (if available)
@@ -67,7 +64,8 @@ pub fn compute_embeddings(
         }
     }
 
-    let embed_tensor = Tensor::from_vec(output, Shape::new(vec![batch_size, seq_len, hidden_size]))?;
+    let embed_tensor =
+        Tensor::from_vec(output, Shape::new(vec![batch_size, seq_len, hidden_size]))?;
 
     // Apply LayerNorm
     layernorm::layer_norm(&embed_tensor, ln_weight, ln_bias, eps)
@@ -94,10 +92,16 @@ mod tests {
         let token_type_ids = vec![vec![0u32, 0, 0], vec![0, 0, 0]];
 
         let result = compute_embeddings(
-            &input_ids, &token_type_ids,
-            &word_emb, &pos_emb, Some(&tt_emb),
-            &ln_w, &ln_b, 1e-12,
-        ).unwrap();
+            &input_ids,
+            &token_type_ids,
+            &word_emb,
+            &pos_emb,
+            Some(&tt_emb),
+            &ln_w,
+            &ln_b,
+            1e-12,
+        )
+        .unwrap();
 
         assert_eq!(result.shape().dims(), &[2, 3, 4]); // [batch, seq, hidden]
     }

@@ -29,11 +29,30 @@ fn repo_scope_mcps_not_tracked_by_git() {
 
 #[test]
 fn repo_scope_gitignore_excludes_mcps() {
-    let gitignore = std::fs::read_to_string(repo_root().join(".gitignore"))
-        .expect("read .gitignore");
+    let gitignore =
+        std::fs::read_to_string(repo_root().join(".gitignore")).expect("read .gitignore");
 
     assert!(
         gitignore.lines().any(|line| line.trim() == "/mcps/"),
         ".gitignore must contain a /mcps/ entry"
     );
+}
+
+#[test]
+fn public_api_exports_are_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<hypembed::Embedder>();
+    assert_send_sync::<hypembed::EmbeddingOptions>();
+    assert_send_sync::<hypembed::PoolingStrategy>();
+    assert_send_sync::<hypembed::HypEmbedError>();
+}
+
+#[test]
+fn public_api_surface_uses_only_documented_reexports() {
+    use hypembed::{Embedder, EmbeddingOptions, HypEmbedError, PoolingStrategy};
+
+    let _ = std::any::type_name::<Embedder>();
+    let _ = std::any::type_name::<EmbeddingOptions>();
+    let _ = std::any::type_name::<PoolingStrategy>();
+    let _ = std::any::type_name::<HypEmbedError>();
 }

@@ -1,17 +1,17 @@
 /// Tensor arithmetic operations.
 ///
 /// All operations are dimension-checked and return new tensors (functional style).
-
 use crate::error::{HypEmbedError, Result};
-use crate::tensor::{Tensor, Shape};
 use crate::tensor::simd;
+use crate::tensor::{Shape, Tensor};
 
 /// Element-wise addition of two tensors with the same shape.
 pub fn add(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if a.shape() != b.shape() {
         return Err(HypEmbedError::Tensor(format!(
             "Shape mismatch in add: {} vs {}",
-            a.shape(), b.shape()
+            a.shape(),
+            b.shape()
         )));
     }
     let mut data = vec![0.0f32; a.numel()];
@@ -32,13 +32,15 @@ pub fn add_bias(tensor: &Tensor, bias: &Tensor) -> Result<Tensor> {
     }
     let t_dims = tensor.shape().dims();
     let bias_len = bias.shape().dim(0)?;
-    let last_dim = *t_dims.last().ok_or_else(|| {
-        HypEmbedError::Tensor("Cannot add bias to scalar tensor".into())
-    })?;
+    let last_dim = *t_dims
+        .last()
+        .ok_or_else(|| HypEmbedError::Tensor("Cannot add bias to scalar tensor".into()))?;
     if last_dim != bias_len {
         return Err(HypEmbedError::Tensor(format!(
             "Bias length {} does not match last dim {} of tensor shape {}",
-            bias_len, last_dim, tensor.shape()
+            bias_len,
+            last_dim,
+            tensor.shape()
         )));
     }
     let bias_data = bias.data();
@@ -56,7 +58,8 @@ pub fn mul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if a.shape() != b.shape() {
         return Err(HypEmbedError::Tensor(format!(
             "Shape mismatch in mul: {} vs {}",
-            a.shape(), b.shape()
+            a.shape(),
+            b.shape()
         )));
     }
     let mut data = vec![0.0f32; a.numel()];
@@ -93,7 +96,8 @@ pub fn add_broadcast(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if b_dims.len() > rank {
         return Err(HypEmbedError::Tensor(format!(
             "Cannot broadcast {} onto {}",
-            b.shape(), a.shape()
+            b.shape(),
+            a.shape()
         )));
     }
     let offset = rank - b_dims.len();
@@ -150,7 +154,8 @@ pub fn mul_broadcast_last(tensor: &Tensor, mask: &Tensor) -> Result<Tensor> {
     if t_dims.len() != m_dims.len() {
         return Err(HypEmbedError::Tensor(format!(
             "Rank mismatch in mul_broadcast_last: {} vs {}",
-            tensor.shape(), mask.shape()
+            tensor.shape(),
+            mask.shape()
         )));
     }
 
@@ -201,7 +206,8 @@ pub fn sum_along_axis(tensor: &Tensor, axis: usize) -> Result<Tensor> {
     if axis >= dims.len() {
         return Err(HypEmbedError::Tensor(format!(
             "Axis {} out of range for shape {}",
-            axis, tensor.shape()
+            axis,
+            tensor.shape()
         )));
     }
 
@@ -247,10 +253,8 @@ mod tests {
 
     #[test]
     fn test_add_bias() {
-        let t = Tensor::from_vec(
-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-            Shape::new(vec![2, 3]),
-        ).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let bias = Tensor::from_vec(vec![0.1, 0.2, 0.3], Shape::new(vec![3])).unwrap();
         let result = add_bias(&t, &bias).unwrap();
         let expected = [1.1, 2.2, 3.3, 4.1, 5.2, 6.3];
@@ -276,10 +280,8 @@ mod tests {
 
     #[test]
     fn test_sum_along_axis() {
-        let t = Tensor::from_vec(
-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-            Shape::new(vec![2, 3]),
-        ).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let s = sum_along_axis(&t, 0).unwrap();
         assert_eq!(s.shape().dims(), &[3]);
         assert_eq!(s.data(), &[5.0, 7.0, 9.0]);

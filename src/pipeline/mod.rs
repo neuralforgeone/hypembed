@@ -1,6 +1,5 @@
-/// Pipeline module.
-///
-/// Contains the high-level `Embedder` API that combines tokenizer + model
-/// into a single embedding pipeline.
+//! Pipeline module (internal).
+//!
+//! Contains the high-level [`Embedder`](embedder::Embedder) coordinator.
 
-pub mod embedder;
+pub(crate) mod embedder;

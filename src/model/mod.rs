@@ -1,19 +1,13 @@
-/// Model module.
-///
-/// Implements a BERT-like encoder architecture:
-/// - Model configuration parsing
-/// - SafeTensors weight loading
-/// - Token/position/segment embeddings
-/// - Multi-head self-attention
-/// - Feed-forward network
-/// - Encoder layer stacking
-/// - Pooling strategies
+//! Model module (internal).
+//!
+//! Implements a BERT-like encoder architecture:
+//! configuration parsing, SafeTensors loading, embeddings, attention, FFN, pooling.
 
-pub mod config;
-pub mod safetensors;
-pub mod weights;
-pub mod embedding;
-pub mod attention;
-pub mod ff;
-pub mod encoder;
-pub mod pool;
+pub(crate) mod attention;
+pub(crate) mod config;
+pub(crate) mod embedding;
+pub(crate) mod encoder;
+pub(crate) mod ff;
+pub(crate) mod pool;
+pub(crate) mod safetensors;
+pub(crate) mod weights;

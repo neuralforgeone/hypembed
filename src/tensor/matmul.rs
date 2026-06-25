@@ -1,10 +1,9 @@
 /// Matrix multiplication operations.
 ///
 /// Implements 2D matmul and batched matmul needed for transformer inference.
-
 use crate::error::{HypEmbedError, Result};
-use crate::tensor::{Shape, Tensor};
 use crate::tensor::simd;
+use crate::tensor::{Shape, Tensor};
 
 /// 2D matrix multiplication: `C = A @ B`
 ///
@@ -18,7 +17,8 @@ pub fn matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if a.rank() != 2 || b.rank() != 2 {
         return Err(HypEmbedError::Tensor(format!(
             "matmul requires 2D tensors, got shapes {} and {}",
-            a.shape(), b.shape()
+            a.shape(),
+            b.shape()
         )));
     }
     let m = a.shape().dim(0)?;
@@ -64,7 +64,8 @@ pub fn batched_matmul(a: &Tensor, b: &Tensor) -> Result<Tensor> {
     if a.rank() != 3 || b.rank() != 3 {
         return Err(HypEmbedError::Tensor(format!(
             "batched_matmul requires 3D tensors, got shapes {} and {}",
-            a.shape(), b.shape()
+            a.shape(),
+            b.shape()
         )));
     }
     let batch_a = a.shape().dim(0)?;
@@ -145,7 +146,8 @@ mod tests {
     #[test]
     fn test_matmul_rect() {
         // [2, 3] @ [3, 1]
-        let a = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+        let a =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let b = Tensor::from_vec(vec![1.0, 0.0, 1.0], Shape::new(vec![3, 1])).unwrap();
         let c = matmul(&a, &b).unwrap();
         assert_eq!(c.shape().dims(), &[2, 1]);
@@ -168,14 +170,16 @@ mod tests {
                 2.0, 0.0, 0.0, 2.0, // batch 1: 2*identity
             ],
             Shape::new(vec![2, 2, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let b = Tensor::from_vec(
             vec![
                 3.0, 4.0, 5.0, 6.0, // batch 0
                 3.0, 4.0, 5.0, 6.0, // batch 1
             ],
             Shape::new(vec![2, 2, 2]),
-        ).unwrap();
+        )
+        .unwrap();
         let c = batched_matmul(&a, &b).unwrap();
         assert_eq!(c.shape().dims(), &[2, 2, 2]);
         // batch 0: identity * B = B

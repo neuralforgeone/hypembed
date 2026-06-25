@@ -12,7 +12,6 @@
 /// 3. If no match is found for any prefix, the entire word maps to `[UNK]`
 ///
 /// This matches the original BERT WordPiece implementation.
-
 use crate::tokenizer::vocab::Vocab;
 
 /// Maximum subword length to consider (prevents pathological cases).
@@ -74,11 +73,10 @@ mod tests {
     /// Create a small test vocabulary.
     fn make_test_vocab() -> Vocab {
         let tokens = vec![
-            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]",
-            "hello", "world", "un", "##aff", "##able",
-            "rust", "##ing", "##s", "the", "a",
+            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "hello", "world", "un", "##aff",
+            "##able", "rust", "##ing", "##s", "the", "a",
         ];
-        Vocab::from_str(&tokens.join("\n")).unwrap()
+        Vocab::parse(&tokens.join("\n")).unwrap()
     }
 
     #[test]

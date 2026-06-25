@@ -23,7 +23,10 @@ fn main() {
 
     let model = match Embedder::load(model_dir) {
         Ok(m) => {
-            println!("Model loaded successfully (hidden_size={})", m.hidden_size());
+            println!(
+                "Model loaded successfully (hidden_size={})",
+                m.hidden_size()
+            );
             m
         }
         Err(e) => {

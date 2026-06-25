@@ -9,7 +9,6 @@
 /// 6. Split on punctuation (each punctuation character becomes its own token)
 ///
 /// This matches the behavior of `BasicTokenizer` in the HuggingFace tokenizers library.
-
 use unicode_normalization::UnicodeNormalization;
 
 /// Pre-tokenize a text string into word-level tokens.
@@ -94,9 +93,9 @@ fn is_whitespace(ch: char) -> bool {
         return true;
     }
     // Unicode category Zs (space separator)
-    matches!(ch,
-        '\u{00A0}' | '\u{1680}' | '\u{2000}'..='\u{200A}' |
-        '\u{202F}' | '\u{205F}' | '\u{3000}'
+    matches!(
+        ch,
+        '\u{00A0}' | '\u{1680}' | '\u{2000}'..='\u{200A}' | '\u{202F}' | '\u{205F}' | '\u{3000}'
     )
 }
 
@@ -115,9 +114,7 @@ fn is_control(ch: char) -> bool {
         return true;
     }
     // Zero-width characters
-    matches!(ch,
-        '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{FEFF}'
-    )
+    matches!(ch, '\u{200B}' | '\u{200C}' | '\u{200D}' | '\u{FEFF}')
 }
 
 /// Check if a character is punctuation.
@@ -129,7 +126,8 @@ fn is_punctuation(ch: char) -> bool {
     if (33..=47).contains(&cp)      // ! " # $ % & ' ( ) * + , - . /
         || (58..=64).contains(&cp)  // : ; < = > ? @
         || (91..=96).contains(&cp)  // [ \ ] ^ _ `
-        || (123..=126).contains(&cp) // { | } ~
+        || (123..=126).contains(&cp)
+    // { | } ~
     {
         return true;
     }
@@ -141,10 +139,15 @@ fn is_punctuation(ch: char) -> bool {
     // Check Unicode general categories for punctuation
     // Covers Pc, Pd, Pe, Pf, Pi, Po, Ps
     let cat = unicode_general_category(ch);
-    matches!(cat,
-        GeneralCategory::Pc | GeneralCategory::Pd | GeneralCategory::Pe |
-        GeneralCategory::Pf | GeneralCategory::Pi | GeneralCategory::Po |
-        GeneralCategory::Ps
+    matches!(
+        cat,
+        GeneralCategory::Pc
+            | GeneralCategory::Pd
+            | GeneralCategory::Pe
+            | GeneralCategory::Pf
+            | GeneralCategory::Pi
+            | GeneralCategory::Po
+            | GeneralCategory::Ps
     )
 }
 
@@ -153,9 +156,7 @@ fn is_punctuation(ch: char) -> bool {
 /// Decomposes characters into base + combining marks, then removes
 /// all combining marks (Unicode category Mn/Mc/Me).
 fn strip_accents(text: &str) -> String {
-    text.nfd()
-        .filter(|ch| !is_combining_mark(*ch))
-        .collect()
+    text.nfd().filter(|ch| !is_combining_mark(*ch)).collect()
 }
 
 /// Check if a character is a Unicode combining mark.
@@ -210,21 +211,37 @@ fn tokenize_chinese_chars(text: &str) -> String {
 fn is_chinese_char(ch: char) -> bool {
     let cp = ch as u32;
     // CJK Unified Ideographs: U+4E00–U+9FFF
-    if (0x4E00..=0x9FFF).contains(&cp) { return true; }
+    if (0x4E00..=0x9FFF).contains(&cp) {
+        return true;
+    }
     // CJK Extension A: U+3400–U+4DBF
-    if (0x3400..=0x4DBF).contains(&cp) { return true; }
+    if (0x3400..=0x4DBF).contains(&cp) {
+        return true;
+    }
     // CJK Extension B: U+20000–U+2A6DF
-    if (0x20000..=0x2A6DF).contains(&cp) { return true; }
+    if (0x20000..=0x2A6DF).contains(&cp) {
+        return true;
+    }
     // CJK Extension C: U+2A700–U+2B73F
-    if (0x2A700..=0x2B73F).contains(&cp) { return true; }
+    if (0x2A700..=0x2B73F).contains(&cp) {
+        return true;
+    }
     // CJK Extension D: U+2B740–U+2B81F
-    if (0x2B740..=0x2B81F).contains(&cp) { return true; }
+    if (0x2B740..=0x2B81F).contains(&cp) {
+        return true;
+    }
     // CJK Extension E: U+2B820–U+2CEAF
-    if (0x2B820..=0x2CEAF).contains(&cp) { return true; }
+    if (0x2B820..=0x2CEAF).contains(&cp) {
+        return true;
+    }
     // CJK Compatibility Ideographs: U+F900–U+FAFF
-    if (0xF900..=0xFAFF).contains(&cp) { return true; }
+    if (0xF900..=0xFAFF).contains(&cp) {
+        return true;
+    }
     // CJK Compatibility Ideographs Supplement: U+2F800–U+2FA1F
-    if (0x2F800..=0x2FA1F).contains(&cp) { return true; }
+    if (0x2F800..=0x2FA1F).contains(&cp) {
+        return true;
+    }
     false
 }
 
@@ -261,18 +278,22 @@ fn unicode_general_category(ch: char) -> GeneralCategory {
         0x203A => GeneralCategory::Pf, // Single right-pointing angle quotation mark
         // CJK punctuation
         0x3001 | 0x3002 => GeneralCategory::Po, // 、。
-        0x3008 | 0x300A | 0x300C | 0x300E | 0x3010 | 0x3014 | 0x3016 | 0x3018 | 0x301A => GeneralCategory::Ps,
-        0x3009 | 0x300B | 0x300D | 0x300F | 0x3011 | 0x3015 | 0x3017 | 0x3019 | 0x301B => GeneralCategory::Pe,
+        0x3008 | 0x300A | 0x300C | 0x300E | 0x3010 | 0x3014 | 0x3016 | 0x3018 | 0x301A => {
+            GeneralCategory::Ps
+        }
+        0x3009 | 0x300B | 0x300D | 0x300F | 0x3011 | 0x3015 | 0x3017 | 0x3019 | 0x301B => {
+            GeneralCategory::Pe
+        }
         // Fullwidth forms — specific bracket forms before range
-        0xFF08 => GeneralCategory::Ps, // （
-        0xFF09 => GeneralCategory::Pe, // ）
-        0xFF3B => GeneralCategory::Ps, // ［
-        0xFF3D => GeneralCategory::Pe, // ］
-        0xFF5B => GeneralCategory::Ps, // ｛
-        0xFF5D => GeneralCategory::Pe, // ｝
+        0xFF08 => GeneralCategory::Ps,                            // （
+        0xFF09 => GeneralCategory::Pe,                            // ）
+        0xFF3B => GeneralCategory::Ps,                            // ［
+        0xFF3D => GeneralCategory::Pe,                            // ］
+        0xFF5B => GeneralCategory::Ps,                            // ｛
+        0xFF5D => GeneralCategory::Pe,                            // ｝
         0xFF01..=0xFF07 | 0xFF0A..=0xFF0F => GeneralCategory::Po, // ！-／ (excluding brackets)
-        0xFF1A..=0xFF1B => GeneralCategory::Po, // ：；
-        0xFF1F | 0xFF20 => GeneralCategory::Po, // ？＠
+        0xFF1A..=0xFF1B => GeneralCategory::Po,                   // ：；
+        0xFF1F | 0xFF20 => GeneralCategory::Po,                   // ？＠
         _ => GeneralCategory::Other,
     }
 }

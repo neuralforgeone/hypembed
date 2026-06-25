@@ -76,9 +76,9 @@ Example compatible model:
 
 - Project site: https://neuralforgeone.github.io/hypembed/
 - API docs: https://neuralforgeone.github.io/hypembed/api/hypembed/
-- Architecture notes: [ARCHITECTURE.md](./ARCHITECTURE.md)
-- Product spec: [PRODUCT_SPEC.md](./PRODUCT_SPEC.md)
-- Roadmap: [ROADMAP.md](./ROADMAP.md)
+- Crate docs (local): `cargo doc --open`
+
+The public API is intentionally small: [`Embedder`](https://neuralforgeone.github.io/hypembed/api/hypembed/struct.Embedder.html), [`EmbeddingOptions`](https://neuralforgeone.github.io/hypembed/api/hypembed/struct.EmbeddingOptions.html), [`PoolingStrategy`](https://neuralforgeone.github.io/hypembed/api/hypembed/enum.PoolingStrategy.html), and [`HypEmbedError`](https://neuralforgeone.github.io/hypembed/api/hypembed/enum.HypEmbedError.html). Tensor, tokenizer, and model internals are not part of the stable contract.
 
 ## Design Notes
 
@@ -107,10 +107,10 @@ The project favors explicit behavior and stable numerics:
 
 HypEmbed is early-stage but already includes:
 
-- cross-platform CI
+- cross-platform CI (test, clippy, fmt, doc, MSRV)
+- self-contained tiny-model integration tests (no downloaded weights required)
 - benchmark compilation checks
-- generated API documentation
-- architecture and roadmap notes in-repo
+- generated API documentation with runnable examples
 
 ## License
 

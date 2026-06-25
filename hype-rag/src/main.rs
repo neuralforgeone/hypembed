@@ -87,8 +87,8 @@ fn run() -> Result<(), HypeRagError> {
             let embedder = Embedder::load(&model)?;
             let chunks = store.all_chunks()?;
             if chunks.is_empty() {
-                return Err(HypeRagError::Other(
-                    "index is empty; run `hype-rag index` first".into(),
+                return Err(HypeRagError::invalid_input(
+                    "index is empty; run `hype-rag index` first",
                 ));
             }
             let hits = search_chunks(&embedder, &query, &chunks, top_k)?;
@@ -120,8 +120,8 @@ fn resolve_model_dir(
         return Ok(dir);
     }
     let Some(path) = store.model_dir()? else {
-        return Err(HypeRagError::Other(
-            "model directory not configured; run `hype-rag init --model-dir <path>`".into(),
+        return Err(HypeRagError::config(
+            "model directory not configured; run `hype-rag init --model-dir <path>`",
         ));
     };
     let dir = PathBuf::from(path);
@@ -133,7 +133,7 @@ fn validate_model_dir(dir: &PathBuf) -> Result<(), HypeRagError> {
     for file in ["config.json", "vocab.txt", "model.safetensors"] {
         let p = dir.join(file);
         if !p.exists() {
-            return Err(HypeRagError::Other(format!(
+            return Err(HypeRagError::config(format!(
                 "model directory missing '{}'",
                 p.display()
             )));

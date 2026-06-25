@@ -12,7 +12,6 @@
 /// - `gamma` (scale) and `beta` (bias) are learnable parameters of shape `[hidden_size]`
 ///
 /// This is the standard pre-/post-layer normalization used in transformers.
-
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::Tensor;
 
@@ -26,20 +25,24 @@ use crate::tensor::Tensor;
 pub fn layer_norm(tensor: &Tensor, gamma: &Tensor, beta: &Tensor, eps: f32) -> Result<Tensor> {
     let dims = tensor.shape().dims();
     if dims.is_empty() {
-        return Err(HypEmbedError::Tensor("Cannot apply layer_norm to scalar".into()));
+        return Err(HypEmbedError::Tensor(
+            "Cannot apply layer_norm to scalar".into(),
+        ));
     }
     let hidden_size = *dims.last().unwrap();
 
     if gamma.rank() != 1 || gamma.shape().dim(0)? != hidden_size {
         return Err(HypEmbedError::Tensor(format!(
             "gamma shape mismatch: expected [{}], got {}",
-            hidden_size, gamma.shape()
+            hidden_size,
+            gamma.shape()
         )));
     }
     if beta.rank() != 1 || beta.shape().dim(0)? != hidden_size {
         return Err(HypEmbedError::Tensor(format!(
             "beta shape mismatch: expected [{}], got {}",
-            hidden_size, beta.shape()
+            hidden_size,
+            beta.shape()
         )));
     }
 
@@ -59,10 +62,14 @@ pub fn layer_norm(tensor: &Tensor, gamma: &Tensor, beta: &Tensor, eps: f32) -> R
 
         // Compute variance: E[(x - mean)²]
         // Use two-pass for better numerical stability
-        let var: f32 = row_data.iter().map(|&x| {
-            let diff = x - mean;
-            diff * diff
-        }).sum::<f32>() / hidden_size as f32;
+        let var: f32 = row_data
+            .iter()
+            .map(|&x| {
+                let diff = x - mean;
+                diff * diff
+            })
+            .sum::<f32>()
+            / hidden_size as f32;
 
         // Normalization factor: 1 / sqrt(var + eps)
         let inv_std = 1.0 / (var + eps).sqrt();
@@ -92,11 +99,19 @@ mod tests {
 
         // Mean should be ~0 after normalization
         let mean: f32 = data.iter().sum::<f32>() / 3.0;
-        assert!(mean.abs() < 1e-5, "Mean after LN should be ~0, got {}", mean);
+        assert!(
+            mean.abs() < 1e-5,
+            "Mean after LN should be ~0, got {}",
+            mean
+        );
 
         // Variance should be ~1
         let var: f32 = data.iter().map(|&x| (x - mean) * (x - mean)).sum::<f32>() / 3.0;
-        assert!((var - 1.0).abs() < 1e-4, "Var after LN should be ~1, got {}", var);
+        assert!(
+            (var - 1.0).abs() < 1e-4,
+            "Var after LN should be ~1, got {}",
+            var
+        );
     }
 
     #[test]
@@ -119,7 +134,8 @@ mod tests {
         let t = Tensor::from_vec(
             vec![1.0, 2.0, 3.0, 10.0, 20.0, 30.0],
             Shape::new(vec![2, 3]),
-        ).unwrap();
+        )
+        .unwrap();
         let gamma = Tensor::ones(Shape::new(vec![3]));
         let beta = Tensor::zeros(Shape::new(vec![3]));
         let result = layer_norm(&t, &gamma, &beta, 1e-12).unwrap();

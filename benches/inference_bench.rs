@@ -1,8 +1,8 @@
-use criterion::{criterion_group, criterion_main, Criterion, black_box};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn matmul_bench(c: &mut Criterion) {
-    use hypembed::tensor::{Tensor, Shape};
     use hypembed::tensor::matmul;
+    use hypembed::tensor::{Shape, Tensor};
 
     let sizes = [(64, 64), (128, 128), (256, 256), (384, 384)];
 
@@ -18,8 +18,8 @@ fn matmul_bench(c: &mut Criterion) {
 }
 
 fn softmax_bench(c: &mut Criterion) {
-    use hypembed::tensor::{Tensor, Shape};
     use hypembed::tensor::softmax;
+    use hypembed::tensor::{Shape, Tensor};
 
     let t = Tensor::full(Shape::new(vec![32, 128]), 0.5);
     c.bench_function("softmax_32x128", |bench| {
@@ -30,8 +30,8 @@ fn softmax_bench(c: &mut Criterion) {
 }
 
 fn layernorm_bench(c: &mut Criterion) {
-    use hypembed::tensor::{Tensor, Shape};
     use hypembed::tensor::layernorm;
+    use hypembed::tensor::{Shape, Tensor};
 
     let hidden = 384;
     let seq = 128;
@@ -47,8 +47,8 @@ fn layernorm_bench(c: &mut Criterion) {
 }
 
 fn l2_normalize_bench(c: &mut Criterion) {
-    use hypembed::tensor::{Tensor, Shape};
     use hypembed::tensor::normalize;
+    use hypembed::tensor::{Shape, Tensor};
 
     let t = Tensor::full(Shape::new(vec![32, 384]), 0.5);
     c.bench_function("l2_normalize_32x384", |bench| {
@@ -58,5 +58,11 @@ fn l2_normalize_bench(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, matmul_bench, softmax_bench, layernorm_bench, l2_normalize_bench);
+criterion_group!(
+    benches,
+    matmul_bench,
+    softmax_bench,
+    layernorm_bench,
+    l2_normalize_bench
+);
 criterion_main!(benches);

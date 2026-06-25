@@ -18,29 +18,27 @@ fn test_golden_embeddings() {
     let golden_path = std::env::var("HYPEMBED_GOLDEN_PATH")
         .unwrap_or_else(|_| "tests/fixtures/golden.json".to_string());
 
-    // Check model directory exists
-    assert!(
-        std::path::Path::new(&model_dir).exists(),
-        "Model directory not found: {}. Download a model or set HYPEMBED_TEST_MODEL_DIR.",
-        model_dir
-    );
+    if !std::path::Path::new(&model_dir).exists() {
+        eprintln!(
+            "Skipping golden test: model not found at {model_dir}. Set HYPEMBED_TEST_MODEL_DIR or download weights."
+        );
+        return;
+    }
 
-    // Check golden file exists
-    assert!(
-        std::path::Path::new(&golden_path).exists(),
-        "Golden file not found: {}. Run scripts/generate_golden.py first.",
-        golden_path
-    );
+    if !std::path::Path::new(&golden_path).exists() {
+        eprintln!(
+            "Skipping golden test: golden file not found at {golden_path}. Run scripts/generate_golden.py first."
+        );
+        return;
+    }
 
     // Load model
-    let embedder = hypembed::Embedder::load(&model_dir)
-        .expect("Failed to load model");
+    let embedder = hypembed::Embedder::load(&model_dir).expect("Failed to load model");
 
     // Load golden reference
-    let golden_json = std::fs::read_to_string(&golden_path)
-        .expect("Failed to read golden file");
-    let golden: HashMap<String, Vec<Vec<f64>>> = serde_json::from_str(&golden_json)
-        .expect("Failed to parse golden JSON");
+    let golden_json = std::fs::read_to_string(&golden_path).expect("Failed to read golden file");
+    let golden: HashMap<String, Vec<Vec<f64>>> =
+        serde_json::from_str(&golden_json).expect("Failed to parse golden JSON");
 
     let options = hypembed::EmbeddingOptions::default()
         .with_normalize(true)
@@ -65,13 +63,21 @@ fn test_golden_embeddings() {
             sentence
         );
 
-        for (i, (&actual, &expected)) in result[0].iter().zip(expected_embeddings[0].iter()).enumerate() {
+        for (i, (&actual, &expected)) in result[0]
+            .iter()
+            .zip(expected_embeddings[0].iter())
+            .enumerate()
+        {
             let diff = (actual as f64 - expected).abs();
             max_diff = max_diff.max(diff);
             assert!(
                 diff < tolerance,
                 "Element {} mismatch for '{}': actual={}, expected={}, diff={}",
-                i, sentence, actual, expected, diff
+                i,
+                sentence,
+                actual,
+                expected,
+                diff
             );
         }
         total_tested += 1;
@@ -91,12 +97,14 @@ fn test_deterministic_output() {
         .unwrap_or_else(|_| "tests/fixtures/model".to_string());
 
     if !std::path::Path::new(&model_dir).exists() {
-        eprintln!("Skipping determinism test: model not found at {}", model_dir);
+        eprintln!(
+            "Skipping determinism test: model not found at {}",
+            model_dir
+        );
         return;
     }
 
-    let embedder = hypembed::Embedder::load(&model_dir)
-        .expect("Failed to load model");
+    let embedder = hypembed::Embedder::load(&model_dir).expect("Failed to load model");
 
     let options = hypembed::EmbeddingOptions::default()
         .with_normalize(true)

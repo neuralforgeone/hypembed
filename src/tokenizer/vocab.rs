@@ -1,13 +1,12 @@
+use crate::error::{HypEmbedError, Result};
 /// Vocabulary for BERT-style models.
 ///
 /// Loads a `vocab.txt` file where each line is a token, and the line number
 /// (0-indexed) is the token's ID. This is the standard format used by
 /// BERT, DistilBERT, MiniLM, etc.
-
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
-use crate::error::{HypEmbedError, Result};
 
 /// Special token constants.
 pub const CLS_TOKEN: &str = "[CLS]";
@@ -23,11 +22,22 @@ pub struct Vocab {
     id_to_token: Vec<String>,
 }
 
+impl std::str::FromStr for Vocab {
+    type Err = HypEmbedError;
+
+    /// Parse vocabulary from `vocab.txt` content.
+    ///
+    /// Each line is a token. Line number (0-indexed) is the token ID.
+    fn from_str(content: &str) -> Result<Self> {
+        Vocab::parse(content)
+    }
+}
+
 impl Vocab {
     /// Parse vocabulary from `vocab.txt` content.
     ///
     /// Each line is a token. Line number (0-indexed) is the token ID.
-    pub fn from_str(content: &str) -> Result<Self> {
+    pub fn parse(content: &str) -> Result<Self> {
         let mut token_to_id = HashMap::new();
         let mut id_to_token = Vec::new();
 
@@ -38,15 +48,15 @@ impl Vocab {
         }
 
         if id_to_token.is_empty() {
-            return Err(HypEmbedError::Tokenizer("Vocab file is empty".into()));
+            return Err(HypEmbedError::tokenization("vocab", "vocab file is empty"));
         }
 
         for special in &[CLS_TOKEN, SEP_TOKEN, PAD_TOKEN, UNK_TOKEN] {
             if !token_to_id.contains_key(*special) {
-                return Err(HypEmbedError::Tokenizer(format!(
-                    "Missing required special token '{}' in vocab",
-                    special
-                )));
+                return Err(HypEmbedError::tokenization(
+                    "vocab",
+                    format!("missing required special token '{special}'"),
+                ));
             }
         }
 
@@ -66,7 +76,7 @@ impl Vocab {
                 e
             ))
         })?;
-        Self::from_str(&content)
+        Self::parse(&content)
     }
 
     /// Look up a token's ID. Returns UNK ID if not found.

@@ -1,3 +1,6 @@
+use crate::error::{HypEmbedError, Result};
+use crate::tensor::{Shape, Tensor};
+use serde::Deserialize;
 /// SafeTensors format parser.
 ///
 /// SafeTensors is a simple, safe binary format for storing tensors:
@@ -18,18 +21,14 @@
 ///
 /// `load_mmap()` uses `memmap2` to memory-map the file, avoiding a full
 /// copy into heap memory. The `DataStore` enum abstracts over owned vs mapped storage.
-
 use std::collections::HashMap;
-use serde::Deserialize;
-use crate::error::{HypEmbedError, Result};
-use crate::tensor::{Tensor, Shape};
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::path::Path;
+use memmap2::Mmap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::File;
 #[cfg(not(target_arch = "wasm32"))]
-use memmap2::Mmap;
+use std::path::Path;
 
 /// Metadata for a single tensor in a SafeTensors file.
 #[derive(Debug, Deserialize)]
@@ -81,8 +80,7 @@ impl SafeTensorsFile {
         }
 
         let header_size = u64::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3],
-            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
         ]) as usize;
 
         let header_end = 8 + header_size;
@@ -128,8 +126,7 @@ impl SafeTensorsFile {
         }
 
         let header_size = u64::from_le_bytes([
-            mmap[0], mmap[1], mmap[2], mmap[3],
-            mmap[4], mmap[5], mmap[6], mmap[7],
+            mmap[0], mmap[1], mmap[2], mmap[3], mmap[4], mmap[5], mmap[6], mmap[7],
         ]) as usize;
 
         let header_end = 8 + header_size;
@@ -164,10 +161,7 @@ impl SafeTensorsFile {
                 continue;
             }
             let info: TensorInfo = serde_json::from_value(value.clone()).map_err(|e| {
-                HypEmbedError::Model(format!(
-                    "Failed to parse tensor info for '{}': {}",
-                    name, e
-                ))
+                HypEmbedError::Model(format!("Failed to parse tensor info for '{}': {}", name, e))
             })?;
             tensors.insert(name.clone(), info);
         }
@@ -196,7 +190,10 @@ impl SafeTensorsFile {
         if end > data.len() {
             return Err(HypEmbedError::Model(format!(
                 "Tensor '{}' data offsets [{}, {}) exceed data section size {}",
-                name, start, end, data.len()
+                name,
+                start,
+                end,
+                data.len()
             )));
         }
 
@@ -209,7 +206,10 @@ impl SafeTensorsFile {
                 if raw.len() != expected_bytes {
                     return Err(HypEmbedError::Model(format!(
                         "Tensor '{}': expected {} bytes for F32 shape {:?}, got {}",
-                        name, expected_bytes, info.shape, raw.len()
+                        name,
+                        expected_bytes,
+                        info.shape,
+                        raw.len()
                     )));
                 }
                 let floats: Vec<f32> = raw
@@ -223,7 +223,10 @@ impl SafeTensorsFile {
                 if raw.len() != expected_bytes {
                     return Err(HypEmbedError::Model(format!(
                         "Tensor '{}': expected {} bytes for F16 shape {:?}, got {}",
-                        name, expected_bytes, info.shape, raw.len()
+                        name,
+                        expected_bytes,
+                        info.shape,
+                        raw.len()
                     )));
                 }
                 let floats: Vec<f32> = raw
@@ -240,7 +243,10 @@ impl SafeTensorsFile {
                 if raw.len() != expected_bytes {
                     return Err(HypEmbedError::Model(format!(
                         "Tensor '{}': expected {} bytes for BF16 shape {:?}, got {}",
-                        name, expected_bytes, info.shape, raw.len()
+                        name,
+                        expected_bytes,
+                        info.shape,
+                        raw.len()
                     )));
                 }
                 let floats: Vec<f32> = raw

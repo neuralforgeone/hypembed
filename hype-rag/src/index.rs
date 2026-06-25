@@ -57,12 +57,7 @@ pub fn index_directory(
             .to_string()
             .replace('\\', "/");
 
-        let chunks = chunk_text(
-            &rel,
-            &content,
-            DEFAULT_CHUNK_CHARS,
-            DEFAULT_OVERLAP_CHARS,
-        );
+        let chunks = chunk_text(&rel, &content, DEFAULT_CHUNK_CHARS, DEFAULT_OVERLAP_CHARS);
 
         if chunks.is_empty() {
             continue;
@@ -72,12 +67,7 @@ pub fn index_directory(
         let embeddings = embedder.embed(&texts, &options)?;
 
         for (chunk, embedding) in chunks.iter().zip(embeddings.iter()) {
-            store.insert_chunk(
-                &chunk.path,
-                chunk.chunk_index,
-                &chunk.text,
-                embedding,
-            )?;
+            store.insert_chunk(&chunk.path, chunk.chunk_index, &chunk.text, embedding)?;
             indexed += 1;
         }
     }

@@ -1,3 +1,7 @@
+use crate::error::{HypEmbedError, Result};
+use crate::model::config::ModelConfig;
+use crate::model::safetensors::SafeTensorsFile;
+use crate::tensor::Tensor;
 /// Weight loading and management.
 ///
 /// Loads model weights from a SafeTensors file, maps them to the correct
@@ -10,10 +14,6 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
-use crate::error::{HypEmbedError, Result};
-use crate::tensor::Tensor;
-use crate::model::config::ModelConfig;
-use crate::model::safetensors::SafeTensorsFile;
 
 /// Weights for a single attention layer.
 #[derive(Debug)]
@@ -93,21 +93,38 @@ impl ModelWeights {
     /// Load BERT/MiniLM weights (standard HuggingFace naming).
     fn load_bert(st: &SafeTensorsFile, config: &ModelConfig) -> Result<Self> {
         // Embedding weights — try with and without "bert." prefix
-        let word_embeddings = st.get_tensor("embeddings.word_embeddings.weight")
+        let word_embeddings = st
+            .get_tensor("embeddings.word_embeddings.weight")
             .or_else(|_| st.get_tensor("bert.embeddings.word_embeddings.weight"))?;
-        let position_embeddings = st.get_tensor("embeddings.position_embeddings.weight")
+        let position_embeddings = st
+            .get_tensor("embeddings.position_embeddings.weight")
             .or_else(|_| st.get_tensor("bert.embeddings.position_embeddings.weight"))?;
-        let token_type_embeddings = st.get_tensor("embeddings.token_type_embeddings.weight")
+        let token_type_embeddings = st
+            .get_tensor("embeddings.token_type_embeddings.weight")
             .or_else(|_| st.get_tensor("bert.embeddings.token_type_embeddings.weight"))?;
-        let embedding_ln_weight = st.get_tensor("embeddings.LayerNorm.weight")
+        let embedding_ln_weight = st
+            .get_tensor("embeddings.LayerNorm.weight")
             .or_else(|_| st.get_tensor("bert.embeddings.LayerNorm.weight"))?;
-        let embedding_ln_bias = st.get_tensor("embeddings.LayerNorm.bias")
+        let embedding_ln_bias = st
+            .get_tensor("embeddings.LayerNorm.bias")
             .or_else(|_| st.get_tensor("bert.embeddings.LayerNorm.bias"))?;
 
         // Validate embedding shapes
-        Self::validate_shape(&word_embeddings, &[config.vocab_size, config.hidden_size], "word_embeddings")?;
-        Self::validate_shape(&position_embeddings, &[config.max_position_embeddings, config.hidden_size], "position_embeddings")?;
-        Self::validate_shape(&token_type_embeddings, &[config.type_vocab_size, config.hidden_size], "token_type_embeddings")?;
+        Self::validate_shape(
+            &word_embeddings,
+            &[config.vocab_size, config.hidden_size],
+            "word_embeddings",
+        )?;
+        Self::validate_shape(
+            &position_embeddings,
+            &[config.max_position_embeddings, config.hidden_size],
+            "position_embeddings",
+        )?;
+        Self::validate_shape(
+            &token_type_embeddings,
+            &[config.type_vocab_size, config.hidden_size],
+            "token_type_embeddings",
+        )?;
 
         // Load each encoder layer
         let mut layers = Vec::with_capacity(config.num_hidden_layers);
@@ -134,17 +151,29 @@ impl ModelWeights {
     /// - Attention: `q_lin`, `k_lin`, `v_lin`, `out_lin` instead of `self.query`, etc.
     /// - LayerNorm names: `sa_layer_norm`, `output_layer_norm`
     fn load_distilbert(st: &SafeTensorsFile, config: &ModelConfig) -> Result<Self> {
-        let word_embeddings = st.get_tensor("distilbert.embeddings.word_embeddings.weight")
+        let word_embeddings = st
+            .get_tensor("distilbert.embeddings.word_embeddings.weight")
             .or_else(|_| st.get_tensor("embeddings.word_embeddings.weight"))?;
-        let position_embeddings = st.get_tensor("distilbert.embeddings.position_embeddings.weight")
+        let position_embeddings = st
+            .get_tensor("distilbert.embeddings.position_embeddings.weight")
             .or_else(|_| st.get_tensor("embeddings.position_embeddings.weight"))?;
-        let embedding_ln_weight = st.get_tensor("distilbert.embeddings.LayerNorm.weight")
+        let embedding_ln_weight = st
+            .get_tensor("distilbert.embeddings.LayerNorm.weight")
             .or_else(|_| st.get_tensor("embeddings.LayerNorm.weight"))?;
-        let embedding_ln_bias = st.get_tensor("distilbert.embeddings.LayerNorm.bias")
+        let embedding_ln_bias = st
+            .get_tensor("distilbert.embeddings.LayerNorm.bias")
             .or_else(|_| st.get_tensor("embeddings.LayerNorm.bias"))?;
 
-        Self::validate_shape(&word_embeddings, &[config.vocab_size, config.hidden_size], "word_embeddings")?;
-        Self::validate_shape(&position_embeddings, &[config.max_position_embeddings, config.hidden_size], "position_embeddings")?;
+        Self::validate_shape(
+            &word_embeddings,
+            &[config.vocab_size, config.hidden_size],
+            "word_embeddings",
+        )?;
+        Self::validate_shape(
+            &position_embeddings,
+            &[config.max_position_embeddings, config.hidden_size],
+            "position_embeddings",
+        )?;
 
         let mut layers = Vec::with_capacity(config.num_hidden_layers);
         for i in 0..config.num_hidden_layers {
@@ -162,7 +191,11 @@ impl ModelWeights {
         })
     }
 
-    fn load_bert_layer(st: &SafeTensorsFile, config: &ModelConfig, layer_idx: usize) -> Result<EncoderLayerWeights> {
+    fn load_bert_layer(
+        st: &SafeTensorsFile,
+        config: &ModelConfig,
+        layer_idx: usize,
+    ) -> Result<EncoderLayerWeights> {
         let h = config.hidden_size;
         let inter = config.intermediate_size;
 
@@ -204,7 +237,11 @@ impl ModelWeights {
         Ok(EncoderLayerWeights { attention, ff })
     }
 
-    fn load_distilbert_layer(st: &SafeTensorsFile, config: &ModelConfig, layer_idx: usize) -> Result<EncoderLayerWeights> {
+    fn load_distilbert_layer(
+        st: &SafeTensorsFile,
+        config: &ModelConfig,
+        layer_idx: usize,
+    ) -> Result<EncoderLayerWeights> {
         let h = config.hidden_size;
         let inter = config.intermediate_size;
 
@@ -251,7 +288,9 @@ impl ModelWeights {
         if tensor.shape().dims() != expected {
             return Err(HypEmbedError::Model(format!(
                 "Shape mismatch for '{}': expected {:?}, got {}",
-                name, expected, tensor.shape()
+                name,
+                expected,
+                tensor.shape()
             )));
         }
         Ok(())

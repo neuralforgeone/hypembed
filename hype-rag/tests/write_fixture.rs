@@ -10,7 +10,10 @@ fn write_tiny_fixture_creates_required_model_files() {
     for file in ["config.json", "vocab.txt", "model.safetensors"] {
         let path = dir.path().join(file);
         assert!(path.is_file(), "missing fixture file: {}", path.display());
-        assert!(std::fs::metadata(&path).unwrap().len() > 0, "empty fixture: {file}");
+        assert!(
+            std::fs::metadata(&path).unwrap().len() > 0,
+            "empty fixture: {file}"
+        );
     }
 
     let config = std::fs::read_to_string(dir.path().join("config.json")).unwrap();

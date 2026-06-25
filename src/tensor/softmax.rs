@@ -9,7 +9,6 @@
 /// Subtracting the maximum prevents overflow in `exp()` and avoids
 /// underflow of the denominator. This is the standard stable softmax
 /// approach used in all production ML systems.
-
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::Tensor;
 
@@ -20,11 +19,15 @@ use crate::tensor::Tensor;
 pub fn softmax(tensor: &Tensor) -> Result<Tensor> {
     let dims = tensor.shape().dims();
     if dims.is_empty() {
-        return Err(HypEmbedError::Tensor("Cannot apply softmax to scalar".into()));
+        return Err(HypEmbedError::Tensor(
+            "Cannot apply softmax to scalar".into(),
+        ));
     }
     let last_dim = *dims.last().unwrap();
     if last_dim == 0 {
-        return Err(HypEmbedError::Tensor("Cannot apply softmax to zero-length dimension".into()));
+        return Err(HypEmbedError::Tensor(
+            "Cannot apply softmax to zero-length dimension".into(),
+        ));
     }
 
     let data = tensor.data();
@@ -115,10 +118,8 @@ mod tests {
     #[test]
     fn test_softmax_2d() {
         // Softmax along last dim for 2D tensor
-        let t = Tensor::from_vec(
-            vec![1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
-            Shape::new(vec![2, 3]),
-        ).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 1.0, 2.0, 3.0], Shape::new(vec![2, 3])).unwrap();
         let s = softmax(&t).unwrap();
         // Each row should sum to 1
         let sum_row0: f32 = s.data()[0..3].iter().sum();

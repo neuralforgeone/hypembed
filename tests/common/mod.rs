@@ -2,7 +2,11 @@
 
 use std::collections::HashMap;
 
-use hypembed::tokenizer::vocab::{CLS_TOKEN, MASK_TOKEN, PAD_TOKEN, SEP_TOKEN, UNK_TOKEN};
+const CLS_TOKEN: &str = "[CLS]";
+const SEP_TOKEN: &str = "[SEP]";
+const PAD_TOKEN: &str = "\u{005B}PAD\u{005D}";
+const UNK_TOKEN: &str = "[UNK]";
+const MASK_TOKEN: &str = "[MASK]";
 
 /// Minimal BERT config for integration tests.
 pub const TINY_CONFIG_JSON: &str = r#"{
@@ -64,8 +68,18 @@ pub fn tiny_safetensors_bytes() -> Vec<u8> {
         "embeddings.word_embeddings.weight".to_string(),
         (vec![20, 8], word_vals),
     );
-    add(&mut tensors, "embeddings.position_embeddings.weight", &[32, 8], 0.01);
-    add(&mut tensors, "embeddings.token_type_embeddings.weight", &[2, 8], 0.01);
+    add(
+        &mut tensors,
+        "embeddings.position_embeddings.weight",
+        &[32, 8],
+        0.01,
+    );
+    add(
+        &mut tensors,
+        "embeddings.token_type_embeddings.weight",
+        &[2, 8],
+        0.01,
+    );
     add(&mut tensors, "embeddings.LayerNorm.weight", &[8], 1.0);
     add(&mut tensors, "embeddings.LayerNorm.bias", &[8], 0.0);
 
@@ -76,12 +90,7 @@ pub fn tiny_safetensors_bytes() -> Vec<u8> {
         "attention.self.value.weight",
         "attention.output.dense.weight",
     ] {
-        add(
-            &mut tensors,
-            &format!("{layer}.{name}"),
-            &[8, 8],
-            0.01,
-        );
+        add(&mut tensors, &format!("{layer}.{name}"), &[8, 8], 0.01);
     }
     for name in [
         "attention.self.query.bias",
@@ -91,11 +100,7 @@ pub fn tiny_safetensors_bytes() -> Vec<u8> {
         "attention.output.LayerNorm.weight",
         "attention.output.LayerNorm.bias",
     ] {
-        let shape = if name.ends_with("weight") {
-            vec![8]
-        } else {
-            vec![8]
-        };
+        let shape = vec![8];
         let fill = if name.ends_with("weight") { 1.0 } else { 0.0 };
         add(&mut tensors, &format!("{layer}.{name}"), &shape, fill);
     }
@@ -169,6 +174,7 @@ fn build_safetensors(tensors: &HashMap<String, (Vec<usize>, Vec<f32>)>) -> Vec<u
 }
 
 /// Write tiny model files to a directory for CLI integration tests.
+#[allow(dead_code)]
 pub fn write_tiny_model_dir(dir: &std::path::Path) {
     std::fs::create_dir_all(dir).expect("create model dir");
     std::fs::write(dir.join("config.json"), TINY_CONFIG_JSON).expect("write config");

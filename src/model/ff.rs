@@ -8,13 +8,12 @@
 ///
 /// W1: [intermediate_size, hidden_size] (stored transposed in HF convention)
 /// W2: [hidden_size, intermediate_size]
-
 use crate::error::Result;
-use crate::tensor::{Tensor, Shape};
+use crate::model::weights::FeedForwardWeights;
+use crate::tensor::activation;
 use crate::tensor::matmul;
 use crate::tensor::ops;
-use crate::tensor::activation;
-use crate::model::weights::FeedForwardWeights;
+use crate::tensor::{Shape, Tensor};
 
 /// Run the feed-forward block.
 ///
@@ -42,10 +41,7 @@ pub fn feed_forward(hidden: &Tensor, weights: &FeedForwardWeights) -> Result<Ten
 
     // Output: intermediate @ W2^T + b2
     let w2_t = weights.output_weight.transpose_2d()?;
-    let output = ops::add_bias(
-        &matmul::matmul(&intermediate, &w2_t)?,
-        &weights.output_bias,
-    )?;
+    let output = ops::add_bias(&matmul::matmul(&intermediate, &w2_t)?, &weights.output_bias)?;
 
     // Reshape back to 3D
     output.reshape(Shape::new(vec![batch_size, seq_len, hidden_size]))

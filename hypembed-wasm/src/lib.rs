@@ -12,7 +12,11 @@ pub struct WasmEmbedder {
 impl WasmEmbedder {
     /// Create an embedder from in-memory model bytes (no filesystem access).
     #[wasm_bindgen(constructor)]
-    pub fn new(config_json: &str, vocab_txt: &str, weights: &[u8]) -> Result<WasmEmbedder, JsValue> {
+    pub fn new(
+        config_json: &str,
+        vocab_txt: &str,
+        weights: &[u8],
+    ) -> Result<WasmEmbedder, JsValue> {
         let inner = Embedder::from_bytes(config_json, vocab_txt, weights, true)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(WasmEmbedder { inner })
@@ -38,7 +42,9 @@ impl WasmEmbedder {
             .inner
             .embed(&[text], &options)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        out.into_iter().next().ok_or_else(|| JsValue::from_str("empty embedding result"))
+        out.into_iter()
+            .next()
+            .ok_or_else(|| JsValue::from_str("empty embedding result"))
     }
 }
 

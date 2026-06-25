@@ -9,15 +9,14 @@
 /// ```
 ///
 /// The encoder stack is N layers applied sequentially.
-
 use crate::error::Result;
-use crate::tensor::Tensor;
-use crate::tensor::ops;
-use crate::tensor::layernorm;
-use crate::model::config::ModelConfig;
-use crate::model::weights::EncoderLayerWeights;
 use crate::model::attention;
+use crate::model::config::ModelConfig;
 use crate::model::ff;
+use crate::model::weights::EncoderLayerWeights;
+use crate::tensor::layernorm;
+use crate::tensor::ops;
+use crate::tensor::Tensor;
 
 /// Run a single encoder layer.
 pub fn encoder_layer(
@@ -74,8 +73,8 @@ pub fn encoder_forward(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tensor::Shape;
     use crate::model::weights::*;
+    use crate::tensor::Shape;
 
     fn make_tiny_config() -> ModelConfig {
         ModelConfig {

@@ -2,15 +2,22 @@
 ///
 /// The tensor uses row-major (C-order) contiguous storage.
 /// All data is stored as a flat `Vec<f32>` with a `Shape` describing the layout.
-
-pub mod shape;
-pub mod ops;
-pub mod matmul;
-pub mod softmax;
+#[doc(hidden)]
 pub mod activation;
+#[doc(hidden)]
 pub mod layernorm;
+#[doc(hidden)]
+pub mod matmul;
+#[doc(hidden)]
 pub mod normalize;
+#[doc(hidden)]
+pub mod ops;
+#[doc(hidden)]
+pub mod shape;
+#[doc(hidden)]
 pub mod simd;
+#[doc(hidden)]
+pub mod softmax;
 
 use crate::error::{HypEmbedError, Result};
 pub use shape::Shape;
@@ -216,7 +223,8 @@ mod tests {
 
     #[test]
     fn test_from_vec() {
-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         assert_eq!(t.rank(), 2);
         assert_eq!(t.numel(), 6);
         assert_eq!(t.get(&[0, 0]).unwrap(), 1.0);
@@ -239,7 +247,8 @@ mod tests {
 
     #[test]
     fn test_transpose_2d() {
-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let tt = t.transpose_2d().unwrap();
         assert_eq!(tt.shape().dims(), &[3, 2]);
         assert_eq!(tt.get(&[0, 0]).unwrap(), 1.0);
@@ -250,7 +259,8 @@ mod tests {
 
     #[test]
     fn test_reshape() {
-        let t = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let r = t.reshape(Shape::new(vec![3, 2])).unwrap();
         assert_eq!(r.shape().dims(), &[3, 2]);
         assert_eq!(r.get(&[0, 0]).unwrap(), 1.0);
@@ -259,10 +269,8 @@ mod tests {
 
     #[test]
     fn test_slice_first() {
-        let t = Tensor::from_vec(
-            vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
-            Shape::new(vec![2, 3]),
-        ).unwrap();
+        let t =
+            Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], Shape::new(vec![2, 3])).unwrap();
         let s0 = t.slice_first(0).unwrap();
         assert_eq!(s0.shape().dims(), &[3]);
         assert_eq!(s0.data(), &[1.0, 2.0, 3.0]);

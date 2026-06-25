@@ -10,7 +10,6 @@
 ///
 /// Using `max(norm, epsilon)` prevents division by zero for zero vectors.
 /// The output vectors have unit L2 norm (or near-unit for near-zero inputs).
-
 use crate::error::{HypEmbedError, Result};
 use crate::tensor::Tensor;
 
@@ -27,7 +26,9 @@ pub fn l2_normalize(tensor: &Tensor, eps: f32) -> Result<Tensor> {
     }
     let last_dim = *dims.last().unwrap();
     if last_dim == 0 {
-        return Err(HypEmbedError::Tensor("Cannot L2-normalize a zero-length dimension".into()));
+        return Err(HypEmbedError::Tensor(
+            "Cannot L2-normalize a zero-length dimension".into(),
+        ));
     }
 
     let data = tensor.data();
@@ -82,10 +83,7 @@ mod tests {
 
     #[test]
     fn test_l2_normalize_2d() {
-        let t = Tensor::from_vec(
-            vec![3.0, 4.0, 0.0, 5.0],
-            Shape::new(vec![2, 2]),
-        ).unwrap();
+        let t = Tensor::from_vec(vec![3.0, 4.0, 0.0, 5.0], Shape::new(vec![2, 2])).unwrap();
         let n = l2_normalize(&t, 1e-12).unwrap();
         let data = n.data();
         // Row 0: [3/5, 4/5]

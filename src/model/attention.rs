@@ -16,13 +16,12 @@
 /// // Concatenate heads: [batch * heads, seq, head_dim] → [batch, seq, hidden]
 /// output = context @ Wo + bo
 /// ```
-
 use crate::error::Result;
-use crate::tensor::{Tensor, Shape};
+use crate::model::weights::AttentionWeights;
 use crate::tensor::matmul;
 use crate::tensor::ops;
 use crate::tensor::softmax;
-use crate::model::weights::AttentionWeights;
+use crate::tensor::{Shape, Tensor};
 
 /// Attention mask value for padding positions.
 /// Added to scores before softmax to effectively zero out padding attention.
@@ -196,7 +195,8 @@ mod tests {
         let t = Tensor::from_vec(
             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
             Shape::new(vec![1, 2, 3, 1]),
-        ).unwrap();
+        )
+        .unwrap();
         let tt = transpose_1_2(&t, 1, 2, 3, 1).unwrap();
         assert_eq!(tt.shape().dims(), &[1, 3, 2, 1]);
         // Original: [[1,2,3],[4,5,6]] → transposed: [[1,4],[2,5],[3,6]]
@@ -208,7 +208,8 @@ mod tests {
         let t = Tensor::from_vec(
             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
             Shape::new(vec![1, 2, 3]),
-        ).unwrap();
+        )
+        .unwrap();
         let tt = batched_transpose_last_two(&t, 1, 2, 3).unwrap();
         assert_eq!(tt.shape().dims(), &[1, 3, 2]);
         assert_eq!(tt.data(), &[1.0, 4.0, 2.0, 5.0, 3.0, 6.0]);

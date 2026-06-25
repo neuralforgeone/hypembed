@@ -1,3 +1,9 @@
+use crate::error::{HypEmbedError, Result};
+use crate::tokenizer::pre_tokenize;
+use crate::tokenizer::vocab::Vocab;
+use crate::tokenizer::wordpiece;
+#[cfg(not(target_arch = "wasm32"))]
+use rayon::prelude::*;
 /// Encoding: the final tokenizer output.
 ///
 /// Combines pre-tokenization, WordPiece, and special token handling
@@ -5,12 +11,6 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
-use crate::error::{HypEmbedError, Result};
-use crate::tokenizer::pre_tokenize;
-use crate::tokenizer::vocab::Vocab;
-use crate::tokenizer::wordpiece;
-#[cfg(not(target_arch = "wasm32"))]
-use rayon::prelude::*;
 
 /// The output of tokenizing a single text.
 #[derive(Debug, Clone)]
@@ -150,12 +150,10 @@ mod tests {
 
     fn make_test_tokenizer() -> Tokenizer {
         let tokens = vec![
-            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]",
-            "hello", "world", "un", "##aff", "##able",
-            "rust", "##ing", "##s", "the", "a",
-            ",", ".", "!", "?",
+            "[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]", "hello", "world", "un", "##aff",
+            "##able", "rust", "##ing", "##s", "the", "a", ",", ".", "!", "?",
         ];
-        let vocab = Vocab::from_str(&tokens.join("\n")).unwrap();
+        let vocab = Vocab::parse(&tokens.join("\n")).unwrap();
         Tokenizer::from_vocab(vocab, true)
     }
 

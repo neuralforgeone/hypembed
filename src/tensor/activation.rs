@@ -9,7 +9,6 @@
 ///
 /// This matches the implementation used in BERT, GPT-2, and most HuggingFace models.
 /// The approximation is accurate to ~1e-4 relative error.
-
 use crate::tensor::Tensor;
 
 /// Constant: sqrt(2 / π) ≈ 0.7978845608
@@ -17,10 +16,14 @@ const SQRT_2_OVER_PI: f32 = 0.797_884_6;
 
 /// Apply GELU element-wise.
 pub fn gelu(tensor: &Tensor) -> Tensor {
-    let data: Vec<f32> = tensor.data().iter().map(|&x| {
-        let inner = SQRT_2_OVER_PI * (x + 0.044715 * x * x * x);
-        0.5 * x * (1.0 + inner.tanh())
-    }).collect();
+    let data: Vec<f32> = tensor
+        .data()
+        .iter()
+        .map(|&x| {
+            let inner = SQRT_2_OVER_PI * (x + 0.044715 * x * x * x);
+            0.5 * x * (1.0 + inner.tanh())
+        })
+        .collect();
     // Shape unchanged, length unchanged; unwrap is safe
     Tensor::from_vec(data, tensor.shape().clone()).unwrap()
 }

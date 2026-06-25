@@ -7,7 +7,6 @@
 /// - dim 2 has size 4
 ///
 /// Total element count = 2 * 3 * 4 = 24.
-
 use crate::error::{HypEmbedError, Result};
 
 /// A tensor shape with dimension sizes.
@@ -111,7 +110,15 @@ impl Shape {
 
 impl std::fmt::Display for Shape {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}]", self.dims.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(", "))
+        write!(
+            f,
+            "[{}]",
+            self.dims
+                .iter()
+                .map(|d| d.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
     }
 }
 

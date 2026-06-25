@@ -293,7 +293,11 @@ mod tests {
     fn test_add_assign_scaled() {
         let mut dst = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
         let src = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];
-        let expected: Vec<f32> = dst.iter().zip(src.iter()).map(|(&d, &s)| d + s * 0.5).collect();
+        let expected: Vec<f32> = dst
+            .iter()
+            .zip(src.iter())
+            .map(|(&d, &s)| d + s * 0.5)
+            .collect();
         add_assign_scaled(&mut dst, &src, 0.5);
         for (a, b) in dst.iter().zip(expected.iter()) {
             assert!((a - b).abs() < 1e-5, "{} != {}", a, b);
@@ -306,13 +310,20 @@ mod tests {
         let b = vec![9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0];
         let expected: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
         let result = dot_product(&a, &b);
-        assert!((result - expected).abs() < 1e-4, "{} != {}", result, expected);
+        assert!(
+            (result - expected).abs() < 1e-4,
+            "{} != {}",
+            result,
+            expected
+        );
     }
 
     #[test]
     fn test_elementwise_add() {
         let a = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0];
-        let b = vec![10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0];
+        let b = vec![
+            10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0,
+        ];
         let mut out = vec![0.0; a.len()];
         elementwise_add(&a, &b, &mut out);
         for i in 0..a.len() {
@@ -333,7 +344,9 @@ mod tests {
 
     #[test]
     fn test_scalar_mul_slice() {
-        let src = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0];
+        let src = vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
+        ];
         let mut out = vec![0.0; src.len()];
         scalar_mul_slice(&src, 3.0, &mut out);
         for i in 0..src.len() {

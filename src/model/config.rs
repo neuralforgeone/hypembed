@@ -1,12 +1,11 @@
+use crate::error::{HypEmbedError, Result};
 /// Model configuration.
 ///
 /// Parsed from a `config.json` file (HuggingFace format).
 /// Defines the architecture hyperparameters of a BERT-like model.
-
 use serde::Deserialize;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
-use crate::error::{HypEmbedError, Result};
 
 /// Configuration for a BERT-like encoder model.
 #[derive(Debug, Clone, Deserialize)]
@@ -77,16 +76,19 @@ impl ModelConfig {
     /// Validate the configuration values.
     pub fn validate(&self) -> Result<()> {
         if self.hidden_size == 0 {
-            return Err(HypEmbedError::Model("hidden_size must be > 0".into()));
+            return Err(HypEmbedError::config("hidden_size", "must be > 0"));
         }
         if self.num_attention_heads == 0 {
-            return Err(HypEmbedError::Model("num_attention_heads must be > 0".into()));
+            return Err(HypEmbedError::config("num_attention_heads", "must be > 0"));
         }
         if self.hidden_size % self.num_attention_heads != 0 {
-            return Err(HypEmbedError::Model(format!(
-                "hidden_size ({}) must be divisible by num_attention_heads ({})",
-                self.hidden_size, self.num_attention_heads
-            )));
+            return Err(HypEmbedError::config(
+                "hidden_size",
+                format!(
+                    "must be divisible by num_attention_heads ({} % {} != 0)",
+                    self.hidden_size, self.num_attention_heads
+                ),
+            ));
         }
         Ok(())
     }
