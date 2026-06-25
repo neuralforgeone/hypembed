@@ -5,13 +5,17 @@ edition = "2021"
 description = "Local RAG CLI powered by hypembed"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/neuralforgeone/hypembed"
+homepage = "https://neuralforgeone.github.io/hypembed/"
+keywords = ["rag", "embeddings", "semantic-search", "cli"]
+categories = ["command-line-utilities", "science"]
+readme = "../README.md"
 
 [[bin]]
 name = "hype-rag"
 path = "src/main.rs"
 
 [dependencies]
-hypembed = { path = ".." }
+hypembed = { version = "0.3.0", path = ".." }
 clap = { version = "4", features = ["derive"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }

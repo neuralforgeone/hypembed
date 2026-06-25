@@ -15,6 +15,7 @@ documentation = "https://neuralforgeone.github.io/hypembed/api/hypembed/"
 readme = "README.md"
 keywords = ["embeddings", "inference", "transformer", "nlp", "bert"]
 categories = ["science", "text-processing"]
+exclude = ["/mcps/", "/agent-tools/", "/.github/", "/scripts/"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
